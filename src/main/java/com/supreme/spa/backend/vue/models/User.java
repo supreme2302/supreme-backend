@@ -14,6 +14,7 @@ public class User {
     private String confirmPassword;
     private String phone;
     private String about;
+    private Boolean onpage;
     private PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
     @JsonCreator
@@ -24,7 +25,8 @@ public class User {
             @JsonProperty("password") String password,
             @JsonProperty("confirmPassword") String confirmPassword,
             @JsonProperty("phone") String phone,
-            @JsonProperty("about") String about) {
+            @JsonProperty("about") String about,
+            @JsonProperty("onpage") Boolean onpage) {
         this.id = id;
         this.username = username;
         this.email = email;
@@ -32,6 +34,7 @@ public class User {
         this.confirmPassword = confirmPassword;
         this.phone = phone;
         this.about = about;
+        this.onpage = onpage;
     }
     public User () {}
 
@@ -101,5 +104,13 @@ public class User {
 
     public void setAbout(String about) {
         this.about = about;
+    }
+
+    public Boolean getOnpage() {
+        return onpage;
+    }
+
+    public void setOnpage(Boolean onpage) {
+        this.onpage = onpage;
     }
 }

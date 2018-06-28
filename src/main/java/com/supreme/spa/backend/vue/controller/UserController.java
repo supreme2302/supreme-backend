@@ -12,6 +12,7 @@ import org.springframework.session.jdbc.config.annotation.web.http.EnableJdbcHtt
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpSession;
+import java.util.List;
 
 @RestController
 @RequestMapping("/users")
@@ -72,7 +73,7 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(new Message(UserStatus.ALREADY_AUTHENTICATED));
         }
-        User existsUser = userService.getUser(user);
+        User existsUser = userService.getUser(user.getEmail());
         if (existsUser == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(new Message(UserStatus.NOT_FOUND));
@@ -97,6 +98,17 @@ public class UserController {
                 .body(new Message(UserStatus.SUCCESSFULLY_LOGGED_OUT));
     }
 
+    @GetMapping(path = "/info")
+    public ResponseEntity userInfo(HttpSession session) {
+        Object sessionAttr = session.getAttribute("user");
+        String userEmail = (String)sessionAttr;
+        if (sessionAttr == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(new Message(UserStatus.ACCESS_ERROR));
+        }
+        return ResponseEntity.ok(userService.getUser(userEmail));
+    }
+
     @PostMapping(path = "/change")
     public ResponseEntity change(@RequestBody User user,
                                  HttpSession session) {
@@ -116,8 +128,28 @@ public class UserController {
 
     }
 
+    @GetMapping(path = "/list//{page}")
+    public ResponseEntity listOfUsers(@PathVariable("page") int page,
+                                      HttpSession session) {
+        Object sessionAttribute = session.getAttribute("user");
+        if (sessionAttribute == null) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(new Message(UserStatus.ACCESS_ERROR));
+        }
+        List<User> users = userService.getListOfUsers(page);
+        if (users == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new Message(UserStatus.NOT_FOUND));
+        }
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(users);
+    }
+
     private void sessionAuth(HttpSession session, User user) {
         session.setAttribute("user", user.getEmail());
         session.setMaxInactiveInterval(60 * 60);
     }
 }
+
+//todo написать отдельный маппер для гет запроса на юзера (с паролем), а в общем маппере пароль убрать
+//todo на список юзеров почему-то не отлавилвается ошибка на пустой результат
+//todo написать данные для карточки
