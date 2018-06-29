@@ -29,6 +29,17 @@ public class UserService {
         jdbc.update(sql, user.getUsername(), user.getEmail(), user.getPassword());
     }
 
+    public User getUserForCheck(String email) {
+        String sql = "SELECT * FROM users WHERE LOWER(email) = LOWER(?)";
+        try {
+            return jdbc.queryForObject(sql, (resultSet, i) -> new User(
+                    resultSet.getString("password")
+            ), email);
+        } catch (EmptyResultDataAccessException error) {
+            return null;
+        }
+    }
+
     public User getUser(String email) {
         String sql = "SELECT * FROM users WHERE LOWER(email) = LOWER(?)";
         try {
@@ -37,6 +48,17 @@ public class UserService {
             return null;
         }
     }
+
+    public User getUserById(int id) {
+        String sql = "SELECT * FROM users WHERE id = ?";
+        try {
+            return jdbc.queryForObject(sql, userMapper, id);
+        } catch (EmptyResultDataAccessException error) {
+            return null;
+        }
+    }
+
+
     public int updateUserData(User user) {
         String sql = "UPDATE users SET phone = ?, about = ?, onpage = ? WHERE LOWER(email) = LOWER(?)";
         try {
@@ -66,9 +88,9 @@ public class UserService {
             user.setUsername(resultSet.getString("username"));
             user.setPhone(resultSet.getString("phone"));
             user.setAbout(resultSet.getString("about"));
-            user.setPassword(resultSet.getString("password"));
             user.setOnpage(resultSet.getBoolean("onpage"));
             return user;
         }
     }
 }
+

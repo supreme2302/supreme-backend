@@ -37,6 +37,9 @@ public class User {
         this.onpage = onpage;
     }
     public User () {}
+    public User (String password) {
+        this.password = password;
+    }
 
     public int getId() {
         return id;

@@ -73,7 +73,7 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(new Message(UserStatus.ALREADY_AUTHENTICATED));
         }
-        User existsUser = userService.getUser(user.getEmail());
+        User existsUser = userService.getUserForCheck(user.getEmail());
         if (existsUser == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(new Message(UserStatus.NOT_FOUND));
@@ -129,13 +129,7 @@ public class UserController {
     }
 
     @GetMapping(path = "/list//{page}")
-    public ResponseEntity listOfUsers(@PathVariable("page") int page,
-                                      HttpSession session) {
-        Object sessionAttribute = session.getAttribute("user");
-        if (sessionAttribute == null) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(new Message(UserStatus.ACCESS_ERROR));
-        }
+    public ResponseEntity listOfUsers(@PathVariable("page") int page) {
         List<User> users = userService.getListOfUsers(page);
         if (users == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new Message(UserStatus.NOT_FOUND));
@@ -144,12 +138,20 @@ public class UserController {
                 .body(users);
     }
 
+    @GetMapping(path = "/usercard/{id}")
+    public ResponseEntity userCard(@PathVariable("id") int id) {
+        User existsUser = userService.getUserById(id);
+        if (existsUser == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new Message(UserStatus.NOT_FOUND));
+        }
+        return ResponseEntity.ok(existsUser);
+    }
+
     private void sessionAuth(HttpSession session, User user) {
         session.setAttribute("user", user.getEmail());
         session.setMaxInactiveInterval(60 * 60);
     }
 }
 
-//todo написать отдельный маппер для гет запроса на юзера (с паролем), а в общем маппере пароль убрать
 //todo на список юзеров почему-то не отлавилвается ошибка на пустой результат
-//todo написать данные для карточки
