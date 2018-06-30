@@ -84,6 +84,7 @@ public class UserService {
         @Override
         public User mapRow(ResultSet resultSet, int i) throws SQLException {
             final User user = new User();
+            user.setId(resultSet.getInt("id"));
             user.setEmail(resultSet.getString("email"));
             user.setUsername(resultSet.getString("username"));
             user.setPhone(resultSet.getString("phone"));
