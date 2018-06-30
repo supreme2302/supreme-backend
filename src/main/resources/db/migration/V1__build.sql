@@ -10,6 +10,7 @@ CREATE TABLE IF NOT EXISTS "users" (
   email CITEXT NOT NULL UNIQUE ,
   password TEXT NOT NULL,
   phone citext UNIQUE,
+  skills citext,
   about citext,
   onpage BOOLEAN DEFAULT FALSE
 );

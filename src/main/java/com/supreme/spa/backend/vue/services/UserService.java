@@ -1,7 +1,6 @@
 package com.supreme.spa.backend.vue.services;
 
 import com.supreme.spa.backend.vue.models.User;
-import org.apache.catalina.LifecycleState;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -60,9 +59,9 @@ public class UserService {
 
 
     public int updateUserData(User user) {
-        String sql = "UPDATE users SET phone = ?, about = ?, onpage = ? WHERE LOWER(email) = LOWER(?)";
+        String sql = "UPDATE users SET phone = ?, skills = ?, about = ?, onpage = ? WHERE LOWER(email) = LOWER(?)";
         try {
-            jdbc.update(sql, user.getPhone(), user.getAbout(), user.getOnpage(), user.getEmail());
+            jdbc.update(sql, user.getPhone(), user.getSkills(), user.getAbout(), user.getOnpage(), user.getEmail());
             return 200;
         } catch (EmptyResultDataAccessException error) {
             return 404;
@@ -70,7 +69,7 @@ public class UserService {
     }
 
     public List<User> getListOfUsers(int page) {
-        int limit = 3;
+        int limit = 10;
         int offset = (page - 1) * limit;
         String sql = "SELECT * FROM users WHERE onpage = TRUE ORDER BY username OFFSET ? ROWS LIMIT ?";
         try {
@@ -88,6 +87,7 @@ public class UserService {
             user.setEmail(resultSet.getString("email"));
             user.setUsername(resultSet.getString("username"));
             user.setPhone(resultSet.getString("phone"));
+            user.setSkills(resultSet.getString("skills"));
             user.setAbout(resultSet.getString("about"));
             user.setOnpage(resultSet.getBoolean("onpage"));
             return user;
