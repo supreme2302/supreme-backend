@@ -1,0 +1,14 @@
+language: java
+jdk:
+- oraclejdk9
+sudo: required
+addons:
+  postgresql: "9.6"
+services:
+- postgresql
+before_script:
+  - psql -c "CREATE USER supreme SUPERUSER;" -U postgres
+  - psql -c " alter user supreme createdb;" -U postgres
+  - psql -c "create database spa_backend;" -U postgres
+  - psql -c "drop table if exists flyway_schema_history;" -U postgres
+  - psql -c "grant all on database spa_backend to supreme;" -U postgres
