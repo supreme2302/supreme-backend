@@ -2,6 +2,7 @@ package com.supreme.spa.backend.vue.services;
 
 import com.supreme.spa.backend.vue.models.User;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
@@ -65,11 +66,13 @@ public class UserService {
             return 200;
         } catch (EmptyResultDataAccessException error) {
             return 404;
+        } catch (DuplicateKeyException error) {
+            return 409;
         }
     }
 
     public List<User> getListOfUsers(int page) {
-        int limit = 10;
+        int limit = 15;
         int offset = (page - 1) * limit;
         String sql = "SELECT * FROM users WHERE onpage = TRUE ORDER BY username OFFSET ? ROWS LIMIT ?";
         try {

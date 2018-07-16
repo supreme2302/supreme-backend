@@ -12,7 +12,9 @@ import org.springframework.session.jdbc.config.annotation.web.http.EnableJdbcHtt
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpSession;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/users")
@@ -34,6 +36,7 @@ public class UserController {
         ACCESS_ERROR,
         WRONG_CREDENTIALS,
         NOT_UNIQUE_USERNAME_OR_EMAIL,
+        NOT_UNIQUE_PHONE,
         ALREADY_AUTHENTICATED,
         UNEXPECTED_ERROR,
         NOT_FOUND,
@@ -124,6 +127,10 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(new Message(UserStatus.MAGIC));
         }
+        if (result == 409) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(new Message(UserStatus.NOT_UNIQUE_PHONE));
+        }
         return ResponseEntity.ok(new Message(UserStatus.SUCCESSFULLY_CHANGED));
 
     }
@@ -131,11 +138,14 @@ public class UserController {
     @GetMapping(path = "/list//{page}")
     public ResponseEntity listOfUsers(@PathVariable("page") int page) {
         List<User> users = userService.getListOfUsers(page);
-        if (users == null) {
+        if (users == null || users.size() == 0) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new Message(UserStatus.NOT_FOUND));
         }
+        Map<String, Object> hashResp = new HashMap<>();
+        hashResp.put("page", page + 1);
+        hashResp.put("users", users);
         return ResponseEntity.status(HttpStatus.OK)
-                .body(users);
+                .body(hashResp);
     }
 
     @GetMapping(path = "/usercard/{id}")
