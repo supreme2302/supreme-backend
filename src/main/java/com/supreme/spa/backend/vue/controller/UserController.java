@@ -135,7 +135,7 @@ public class UserController {
 
     }
 
-    @GetMapping(path = "/list//{page}")
+    @GetMapping(path = "/list/{page}")
     public ResponseEntity listOfUsers(@PathVariable("page") int page) {
         List<User> users = userService.getListOfUsers(page);
         if (users == null || users.size() == 0) {
