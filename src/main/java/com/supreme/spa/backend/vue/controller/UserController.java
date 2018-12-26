@@ -10,8 +10,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.session.jdbc.config.annotation.web.http.EnableJdbcHttpSession;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpSession;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -114,6 +116,7 @@ public class UserController {
 
     @PostMapping(path = "/change")
     public ResponseEntity change(@RequestBody User user,
+                                 @RequestParam("image") MultipartFile file,
                                  HttpSession session) {
         Object sessionAttribute = session.getAttribute("user");
         user.setEmail((String)sessionAttribute);
@@ -131,11 +134,18 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.CONFLICT)
                     .body(new Message(UserStatus.NOT_UNIQUE_PHONE));
         }
+        try {
+            userService.store(file, session.getAttribute("user").toString());
+        } catch (IOException except) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                    new Message(UserStatus.UNEXPECTED_ERROR));
+        }
+
         return ResponseEntity.ok(new Message(UserStatus.SUCCESSFULLY_CHANGED));
 
     }
 
-    @GetMapping(path = "/list//{page}")
+    @GetMapping(path = "/list/{page}")
     public ResponseEntity listOfUsers(@PathVariable("page") int page) {
         List<User> users = userService.getListOfUsers(page);
         if (users == null || users.size() == 0) {
@@ -161,6 +171,31 @@ public class UserController {
     private void sessionAuth(HttpSession session, User user) {
         session.setAttribute("user", user.getEmail());
         session.setMaxInactiveInterval(60 * 60);
+    }
+
+    /**
+     * Function to change avatar.
+     * @param file file of avatar to change
+     * @param session session to use
+     * @return response
+     */
+    @PostMapping("/chava")
+    public ResponseEntity changeAva(@RequestParam("image") MultipartFile file,
+                                    HttpSession session) {
+        if (session.getAttribute("user") == null) {
+            session.invalidate();
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(
+                    new Message(UserStatus.NOT_FOUND));
+        }
+        try {
+            userService.store(file, session.getAttribute("user").toString());
+        } catch (IOException except) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                    new Message(UserStatus.UNEXPECTED_ERROR));
+        }
+        return ResponseEntity.status(HttpStatus.OK).body(
+                new Message(UserStatus.SUCCESSFULLY_CHANGED));
+
     }
 }
 

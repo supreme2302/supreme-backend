@@ -12,7 +12,8 @@ CREATE TABLE IF NOT EXISTS "users" (
   phone citext UNIQUE,
   skills citext,
   about citext,
-  onpage BOOLEAN DEFAULT FALSE
+  onpage BOOLEAN DEFAULT FALSE,
+  avatar TEXT
 );
 
 
