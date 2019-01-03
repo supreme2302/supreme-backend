@@ -12,8 +12,10 @@ import org.springframework.session.jdbc.config.annotation.web.http.EnableJdbcHtt
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.imageio.ImageIO;
 import javax.servlet.http.HttpSession;
-import java.io.IOException;
+import java.awt.image.BufferedImage;
+import java.io.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -45,7 +47,7 @@ public class UserController {
         MAGIC
     }
 
-    @PostMapping(path="/create")
+    @PostMapping(path = "/create")
     public ResponseEntity createUser(@RequestBody User user,
                                      HttpSession session) {
         Object sessionAttribute = session.getAttribute("user");
@@ -70,6 +72,7 @@ public class UserController {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(new Message(UserStatus.SUCCESSFULLY_REGISTERED));
     }
+
     @PostMapping(path = "/auth")
     public ResponseEntity signIn(@RequestBody User user,
                                  HttpSession session) {
@@ -106,7 +109,7 @@ public class UserController {
     @GetMapping(path = "/info")
     public ResponseEntity userInfo(HttpSession session) {
         Object sessionAttr = session.getAttribute("user");
-        String userEmail = (String)sessionAttr;
+        String userEmail = (String) sessionAttr;
         if (sessionAttr == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(new Message(UserStatus.ACCESS_ERROR));
@@ -115,11 +118,9 @@ public class UserController {
     }
 
     @PostMapping(path = "/change")
-    public ResponseEntity change(@RequestBody User user,
-                                 @RequestParam("image") MultipartFile file,
-                                 HttpSession session) {
+    public ResponseEntity change(@RequestBody User user, HttpSession session) {
         Object sessionAttribute = session.getAttribute("user");
-        user.setEmail((String)sessionAttribute);
+        user.setEmail((String) sessionAttribute);
         if (sessionAttribute == null) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(new Message(UserStatus.ACCESS_ERROR));
@@ -134,13 +135,6 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.CONFLICT)
                     .body(new Message(UserStatus.NOT_UNIQUE_PHONE));
         }
-        try {
-            userService.store(file, session.getAttribute("user").toString());
-        } catch (IOException except) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
-                    new Message(UserStatus.UNEXPECTED_ERROR));
-        }
-
         return ResponseEntity.ok(new Message(UserStatus.SUCCESSFULLY_CHANGED));
 
     }
@@ -175,13 +169,15 @@ public class UserController {
 
     /**
      * Function to change avatar.
-     * @param file file of avatar to change
+     *
+     * @param file    file of avatar to change
      * @param session session to use
      * @return response
      */
     @PostMapping("/chava")
     public ResponseEntity changeAva(@RequestParam("image") MultipartFile file,
                                     HttpSession session) {
+        System.out.println("chava");
         if (session.getAttribute("user") == null) {
             session.invalidate();
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(
@@ -195,7 +191,34 @@ public class UserController {
         }
         return ResponseEntity.status(HttpStatus.OK).body(
                 new Message(UserStatus.SUCCESSFULLY_CHANGED));
+    }
 
+    /**
+     * Function to get avatar.
+     *
+     * @param session session to check
+     * @return response(image)
+     */
+    @GetMapping("/gava/{email}")
+    public ResponseEntity getAva(HttpSession session,
+                                 @PathVariable(name = "email") String email) {
+        System.out.println("gava");
+        ByteArrayOutputStream bao = new ByteArrayOutputStream();
+        final BufferedImage file;
+        try {
+//            Object userSession = session.getAttribute("user");
+//            if (userSession == null) {
+//                BufferedImage avatar = ImageIO.read(new File(PATH_AVATARS_FOLDER + image));
+//            }
+            file = userService.loadAvatar(email);
+            ImageIO.write(file, "png", bao);
+        } catch (IOException exc) {
+            exc.printStackTrace();
+            return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).body(
+                    new Message(UserStatus.UNEXPECTED_ERROR));
+        }
+
+        return ResponseEntity.ok(bao.toByteArray());
     }
 }
 

@@ -39,8 +39,11 @@ public class User {
         this.skills = skills;
         this.onpage = onpage;
     }
-    public User () {}
-    public User (String password) {
+
+    public User() {
+    }
+
+    public User(String password) {
         this.password = password;
     }
 

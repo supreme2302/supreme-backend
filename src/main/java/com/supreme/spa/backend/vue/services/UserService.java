@@ -93,6 +93,7 @@ public class UserService {
 
     /**
      * Function to save image on PC and db.
+     *
      * @param file image to save
      * @param user user to avatar
      * @throws IOException if there is error(Handled in controller)
@@ -100,12 +101,13 @@ public class UserService {
     public void store(MultipartFile file, String user) throws IOException {
         File tosave = new File(PATH_AVATARS_FOLDER + user + "a.jpg");
         file.transferTo(tosave);
-        String sql = "UPDATE \"users\" SET avatar=? WHERE username=(?)::citext;";
+        String sql = "UPDATE \"users\" SET avatar=? WHERE email=(?)::citext;";
         jdbc.update(sql, user + "a.jpg", user);
     }
 
     /**
      * load.
+     *
      * @param user is username
      * @return avatar
      */
@@ -113,7 +115,7 @@ public class UserService {
     public BufferedImage loadAvatar(String user) throws IOException {
         String image = jdbc.queryForObject(
                 "SELECT avatar FROM \"users\" "
-                        + "WHERE username = ? LIMIT 1;",
+                        + "WHERE email = ? LIMIT 1;",
                 String.class, user
         );
         BufferedImage avatar = ImageIO.read(new File(PATH_AVATARS_FOLDER + image));

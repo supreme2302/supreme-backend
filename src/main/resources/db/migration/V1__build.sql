@@ -6,14 +6,14 @@ DROP TABLE IF EXISTS SPRING_SESSION_ATTRIBUTES CASCADE;
 
 CREATE TABLE IF NOT EXISTS "users" (
   id SERIAL NOT NULL PRIMARY KEY ,
-  username CITEXT NOT NULL UNIQUE ,
-  email CITEXT NOT NULL UNIQUE ,
+  username CITEXT NOT NULL  ,
+  email CITEXT NOT NULL  ,
   password TEXT NOT NULL,
   phone citext UNIQUE,
   skills citext,
   about citext,
   onpage BOOLEAN DEFAULT FALSE,
-  avatar TEXT
+  avatar TEXT DEFAULT 'peenge.png'
 );
 
 
@@ -47,3 +47,64 @@ CREATE TABLE IF NOT EXISTS SPRING_SESSION_ATTRIBUTES (
 DROP INDEX IF EXISTS SPRING_SESSION_ATTRIBUTES_IX1;
 
 CREATE INDEX IF NOT EXISTS SPRING_SESSION_ATTRIBUTES_IX1 ON SPRING_SESSION_ATTRIBUTES (SESSION_PRIMARY_ID);
+
+
+-- select * from users;
+-- select * from spring_session;
+
+-- insert into users (username, email, password, onpage)
+-- values ('a', 'a', 'a',  true);
+-- insert into users (username, email, password, onpage)
+-- values ('a', 'a', 'a',  true);insert into users (username, email, password, onpage)
+-- values ('a', 'a', 'a',  true);insert into users (username, email, password, onpage)
+-- values ('a', 'a', 'a',  true);insert into users (username, email, password, onpage)
+-- values ('a', 'a', 'a',  true);insert into users (username, email, password, onpage)
+-- values ('a', 'a', 'a',  true);insert into users (username, email, password, onpage)
+-- values ('a', 'a', 'a',  true);insert into users (username, email, password, onpage)
+-- values ('a', 'a', 'a',  true);insert into users (username, email, password, onpage)
+-- values ('a', 'a', 'a',  true);insert into users (username, email, password, onpage)
+-- values ('a', 'a', 'a',  true);insert into users (username, email, password, onpage)
+-- values ('a', 'a', 'a',  true);insert into users (username, email, password, onpage)
+-- values ('a', 'a', 'a',  true);insert into users (username, email, password, onpage)
+-- values ('a', 'a', 'a',  true);insert into users (username, email, password, onpage)
+-- values ('a', 'a', 'a',  true);insert into users (username, email, password, onpage)
+-- values ('a', 'a', 'a',  true);insert into users (username, email, password, onpage)
+-- values ('a', 'a', 'a',  true);insert into users (username, email, password, onpage)
+-- values ('a', 'a', 'a',  true);insert into users (username, email, password, onpage)
+-- values ('a', 'a', 'a',  true);insert into users (username, email, password, onpage)
+-- values ('a', 'a', 'a',  true);insert into users (username, email, password, onpage)
+-- values ('a', 'a', 'a',  true);insert into users (username, email, password, onpage)
+-- values ('a', 'a', 'a',  true);insert into users (username, email, password, onpage)
+-- values ('a', 'a', 'a',  true);insert into users (username, email, password, onpage)
+-- values ('a', 'a', 'a',  true);insert into users (username, email, password, onpage)
+-- values ('a', 'a', 'a',  true);insert into users (username, email, password, onpage)
+-- values ('a', 'a', 'a',  true);insert into users (username, email, password, onpage)
+-- values ('a', 'a', 'a',  true);insert into users (username, email, password, onpage)
+-- values ('a', 'a', 'a',  true);insert into users (username, email, password, onpage)
+-- values ('a', 'a', 'a',  true);insert into users (username, email, password, onpage)
+-- values ('a', 'a', 'a',  true);insert into users (username, email, password, onpage)
+-- values ('a', 'a', 'a',  true);insert into users (username, email, password, onpage)
+-- values ('a', 'a', 'a',  true);insert into users (username, email, password, onpage)
+-- values ('a', 'a', 'a',  true);insert into users (username, email, password, onpage)
+-- values ('a', 'a', 'a',  true);insert into users (username, email, password, onpage)
+-- values ('a', 'a', 'a',  true);insert into users (username, email, password, onpage)
+-- values ('a', 'a', 'a',  true);insert into users (username, email, password, onpage)
+-- values ('a', 'a', 'a',  true);insert into users (username, email, password, onpage)
+-- values ('a', 'a', 'a',  true);insert into users (username, email, password, onpage)
+-- values ('a', 'a', 'a',  true);insert into users (username, email, password, onpage)
+-- values ('a', 'a', 'a',  true);insert into users (username, email, password, onpage)
+-- values ('a', 'a', 'a',  true);insert into users (username, email, password, onpage)
+-- values ('a', 'a', 'a',  true);insert into users (username, email, password, onpage)
+-- values ('a', 'a', 'a',  true);insert into users (username, email, password, onpage)
+-- values ('a', 'a', 'a',  true);insert into users (username, email, password, onpage)
+-- values ('a', 'a', 'a',  true);insert into users (username, email, password, onpage)
+-- values ('a', 'a', 'a',  true);insert into users (username, email, password, onpage)
+-- values ('a', 'a', 'a',  true);insert into users (username, email, password, onpage)
+-- values ('a', 'a', 'a',  true);insert into users (username, email, password, onpage)
+-- values ('a', 'a', 'a',  true);insert into users (username, email, password, onpage)
+-- values ('a', 'a', 'a',  true);insert into users (username, email, password, onpage)
+-- values ('a', 'a', 'a',  true);insert into users (username, email, password, onpage)
+-- values ('a', 'a', 'a',  true);insert into users (username, email, password, onpage)
+-- values ('a', 'a', 'a',  true);insert into users (username, email, password, onpage)
+-- values ('a', 'a', 'a',  true);insert into users (username, email, password, onpage)
+-- values ('a', 'a', 'a',  true);

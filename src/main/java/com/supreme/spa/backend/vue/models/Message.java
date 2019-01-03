@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class Message {
     private String message;
+
     @JsonCreator
     public Message(
             @JsonProperty("message") Enum message
