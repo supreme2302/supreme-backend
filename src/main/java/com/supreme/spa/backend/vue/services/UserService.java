@@ -1,5 +1,6 @@
 package com.supreme.spa.backend.vue.services;
 
+import com.supreme.spa.backend.vue.models.Auth;
 import com.supreme.spa.backend.vue.models.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DuplicateKeyException;
@@ -17,6 +18,7 @@ import java.io.IOException;
 import java.nio.file.Paths;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -27,30 +29,42 @@ public class UserService {
 
     private JdbcTemplate jdbc;
     private static final UserMapper userMapper = new UserMapper();
+    private static final AuthMapper authMapper = new AuthMapper();
 
     @Autowired
     public UserService(JdbcTemplate jdbc) {
         this.jdbc = jdbc;
     }
 
-    public void createUser(User user) {
-        String sql = "INSERT INTO users (username, email, password) VALUES (?, ?, ?)";
-        jdbc.update(sql, user.getUsername(), user.getEmail(), user.getPassword());
+    public void createUser(Auth auth) {
+        String sql = "INSERT INTO auth (username, email, password) VALUES (?, ?, ?) RETURNING id";
+        String sqlProfile = "INSERT INTO profile(user_id) VALUES (?)";
+        Integer id = jdbc.queryForObject(sql, Integer.class, auth.getUsername(), auth.getEmail(), auth.getPassword());
+        jdbc.update(sqlProfile, id);
     }
 
-    public User getUserForCheck(String email) {
-        String sql = "SELECT * FROM users WHERE LOWER(email) = LOWER(?)";
+    public String getAuthForCheck(String email) {
+        String sql = "SELECT password FROM auth WHERE LOWER(email) = LOWER(?)";
         try {
-            return jdbc.queryForObject(sql, (resultSet, i) -> new User(
-                    resultSet.getString("password")
-            ), email);
+            return jdbc.queryForObject(sql, String.class, email);
+        } catch (EmptyResultDataAccessException error) {
+            return null;
+        }
+    }
+
+    public Auth getAuthByEmail(String email) {
+        String sql = "SELECT * FROM auth WHERE LOWER(email) = LOWER(?)";
+        try {
+            return jdbc.queryForObject(sql, authMapper, email);
         } catch (EmptyResultDataAccessException error) {
             return null;
         }
     }
 
     public User getUser(String email) {
-        String sql = "SELECT * FROM users WHERE LOWER(email) = LOWER(?)";
+        String sql = "select auth.id, auth.email, auth.username, profile.phone, profile.about, profile.onpage from auth\n" +
+                "join profile on auth.id = profile.user_id\n" +
+                "where email = ?";
         try {
             return jdbc.queryForObject(sql, userMapper, email);
         } catch (EmptyResultDataAccessException error) {
@@ -69,15 +83,56 @@ public class UserService {
 
 
     public int updateUserData(User user) {
-        String sql = "UPDATE users SET phone = ?, skills = ?, about = ?, onpage = ? WHERE LOWER(email) = LOWER(?)";
+        String sqlForUpdateProfile = "UPDATE profile SET phone = ?, about = ?, onpage = ? WHERE user_id = ?";
         try {
-            jdbc.update(sql, user.getPhone(), user.getSkills(), user.getAbout(), user.getOnpage(), user.getEmail());
+            jdbc.update(sqlForUpdateProfile, user.getPhone(), user.getAbout(), user.getOnpage(), user.getId());
+            updateUserSkills(user.getId(), user.getSkills());
             return 200;
         } catch (EmptyResultDataAccessException error) {
             return 404;
         } catch (DuplicateKeyException error) {
             return 409;
         }
+    }
+
+    private void updateUserSkills(int userId, String[] skills) {
+        for (String name: skills) {
+            Integer skillId = getSkillIdByName(name);
+            Integer profileId = getProfileIdByUserId(userId);
+            if (skillId == null) {
+                String sql = "INSERT INTO skill(skill_name) VALUES (?) RETURNING id";
+                skillId = jdbc.queryForObject(sql, Integer.class, name);
+            }
+            String sql = "INSERT INTO profile_skill(profile_id, skill_id) VALUES (?, ?)";
+            jdbc.update(sql, profileId, skillId);
+        }
+    }
+
+    private Integer getSkillIdByName(String name) {
+        String sql = "SELECT id FROM skill WHERE skill_name = ?";
+        try {
+            return jdbc.queryForObject(sql, Integer.class, name);
+        } catch (EmptyResultDataAccessException e) {
+            return null;
+        }
+    }
+
+    private Integer getProfileIdByUserId(int id) {
+        String sql = "SELECT id FROM profile WHERE user_id = ?";
+        try {
+            return jdbc.queryForObject(sql, Integer.class, id);
+        } catch (EmptyResultDataAccessException e) {
+            return null;
+        }
+    }
+
+    public List<String> getSkillsByUserEmail(String email) {
+        String sql = "select skill_name from profile\n" +
+                "join profile_skill ps on profile.id = ps.profile_id\n" +
+                "join skill s on ps.skill_id = s.id\n" +
+                "join auth a on profile.user_id = a.id\n" +
+                "where email = ?";
+        return jdbc.query(sql, ((resultSet, i) -> resultSet.getString("skill_name")), email);
     }
 
     public List<User> getListOfUsers(int page) {
@@ -130,10 +185,20 @@ public class UserService {
             user.setEmail(resultSet.getString("email"));
             user.setUsername(resultSet.getString("username"));
             user.setPhone(resultSet.getString("phone"));
-            user.setSkills(resultSet.getString("skills"));
             user.setAbout(resultSet.getString("about"));
             user.setOnpage(resultSet.getBoolean("onpage"));
             return user;
+        }
+    }
+
+    private static final class AuthMapper implements RowMapper<Auth> {
+        @Override
+        public Auth mapRow(ResultSet resultSet, int i) throws SQLException {
+            Auth auth = new Auth();
+            auth.setId(resultSet.getInt("id"));
+            auth.setEmail(resultSet.getString("email"));
+            auth.setUsername(resultSet.getString("username"));
+            return auth;
         }
     }
 }

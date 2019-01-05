@@ -1,7 +1,9 @@
 package com.supreme.spa.backend.vue.controller;
 
 
+import com.supreme.spa.backend.vue.models.Auth;
 import com.supreme.spa.backend.vue.models.Message;
+import com.supreme.spa.backend.vue.models.Profile;
 import com.supreme.spa.backend.vue.models.User;
 import com.supreme.spa.backend.vue.services.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -48,49 +50,59 @@ public class UserController {
     }
 
     @PostMapping(path = "/create")
-    public ResponseEntity createUser(@RequestBody User user,
+    public ResponseEntity createUser(@RequestBody Auth auth,
                                      HttpSession session) {
         Object sessionAttribute = session.getAttribute("user");
         if (sessionAttribute != null) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(new Message(UserStatus.ALREADY_AUTHENTICATED));
         }
-        if ((!user.checkConfirm(user.getPassword(), user.getConfirmPassword()))
-                || user.getEmail() == null || user.getUsername() == null
-                || user.getPassword() == null || user.getConfirmPassword() == null) {
+        if (auth.getEmail() == null || auth.getUsername() == null
+                || auth.getPassword() == null || auth.getConfirmPassword() == null) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(new Message(UserStatus.WRONG_CREDENTIALS));
         }
-        user.saltHash();
+
+        if (!auth.checkConfirm(auth.getPassword(), auth.getConfirmPassword())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(new Message(UserStatus.WRONG_CREDENTIALS));
+        }
+        auth.saltHash();
         try {
-            userService.createUser(user);
+            userService.createUser(auth);
         } catch (DuplicateKeyException error) {
             return ResponseEntity.status(HttpStatus.CONFLICT)
                     .body(new Message(UserStatus.NOT_UNIQUE_USERNAME_OR_EMAIL));
         }
-        sessionAuth(session, user);
+        sessionAuth(session, auth);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(new Message(UserStatus.SUCCESSFULLY_REGISTERED));
     }
 
     @PostMapping(path = "/auth")
-    public ResponseEntity signIn(@RequestBody User user,
+    public ResponseEntity signIn(@RequestBody Auth auth,
                                  HttpSession session) {
         Object sessionAttribute = session.getAttribute("user");
         if (sessionAttribute != null) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(new Message(UserStatus.ALREADY_AUTHENTICATED));
         }
-        User existsUser = userService.getUserForCheck(user.getEmail());
-        if (existsUser == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(new Message(UserStatus.NOT_FOUND));
-        }
-        if (!existsUser.checkPassword(user.getPassword())) {
+        if (auth.getEmail() == null || auth.getUsername() == null
+                || auth.getPassword() == null || auth.getConfirmPassword() == null) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(new Message(UserStatus.WRONG_CREDENTIALS));
         }
-        sessionAuth(session, user);
+        String existingUserPassword = userService.getAuthForCheck(auth.getEmail());
+        if (existingUserPassword == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new Message(UserStatus.NOT_FOUND));
+        }
+
+        if (!auth.checkPassword(existingUserPassword)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(new Message(UserStatus.WRONG_CREDENTIALS));
+        }
+        sessionAuth(session, auth);
         return ResponseEntity.status(HttpStatus.OK)
                 .body(new Message(UserStatus.SUCCESSFULLY_AUTHED));
     }
@@ -114,13 +126,22 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(new Message(UserStatus.ACCESS_ERROR));
         }
-        return ResponseEntity.ok(userService.getUser(userEmail));
+        User user = userService.getUser(userEmail);
+        if (user == null) {
+            Auth authUser = userService.getAuthByEmail(userEmail);
+            return ResponseEntity.ok(authUser);
+        }
+        List<String> skills = userService.getSkillsByUserEmail(userEmail);
+        if (skills.size() > 0) {
+            String[] arraySkills = skills.toArray(new String[skills.size()]);
+            user.setSkills(arraySkills);
+        }
+        return ResponseEntity.ok(user);
     }
 
     @PostMapping(path = "/change")
     public ResponseEntity change(@RequestBody User user, HttpSession session) {
         Object sessionAttribute = session.getAttribute("user");
-        user.setEmail((String) sessionAttribute);
         if (sessionAttribute == null) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(new Message(UserStatus.ACCESS_ERROR));
@@ -162,8 +183,8 @@ public class UserController {
         return ResponseEntity.ok(existsUser);
     }
 
-    private void sessionAuth(HttpSession session, User user) {
-        session.setAttribute("user", user.getEmail());
+    private void sessionAuth(HttpSession session, Auth auth) {
+        session.setAttribute("user", auth.getEmail());
         session.setMaxInactiveInterval(60 * 60);
     }
 
