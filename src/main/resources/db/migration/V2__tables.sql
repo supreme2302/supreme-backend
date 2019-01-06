@@ -71,3 +71,4 @@ join skill s on ps.skill_id = s.id
 join auth a on profile.user_id = a.id
 where email = 'd@d.ru';
 
+

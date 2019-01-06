@@ -73,7 +73,9 @@ public class UserService {
     }
 
     public User getUserById(int id) {
-        String sql = "SELECT * FROM users WHERE id = ?";
+        String sql = "select auth.id, auth.email, auth.username, profile.phone, profile.about, profile.onpage from auth\n" +
+                "join profile on auth.id = profile.user_id\n" +
+                "where auth.id = ?";
         try {
             return jdbc.queryForObject(sql, userMapper, id);
         } catch (EmptyResultDataAccessException error) {
@@ -135,12 +137,15 @@ public class UserService {
         return jdbc.query(sql, ((resultSet, i) -> resultSet.getString("skill_name")), email);
     }
 
-    public List<User> getListOfUsers(int page) {
+    public List<Auth> getListOfUsers(int page) {
         int limit = 15;
         int offset = (page - 1) * limit;
-        String sql = "SELECT * FROM users WHERE onpage = TRUE ORDER BY username OFFSET ? ROWS LIMIT ?";
+        String sql = "SELECT auth.id, email, username FROM auth "
+                + "JOIN profile p on auth.id = p.user_id "
+                + "WHERE p.onpage = TRUE "
+                + "ORDER BY username OFFSET ? ROWS LIMIT ?";
         try {
-            return jdbc.query(sql, new Object[]{offset, limit}, userMapper);
+            return jdbc.query(sql, new Object[]{offset, limit}, authMapper);
         } catch (EmptyResultDataAccessException error) {
             return null;
         }
@@ -156,7 +161,7 @@ public class UserService {
     public void store(MultipartFile file, String user) throws IOException {
         File tosave = new File(PATH_AVATARS_FOLDER + user + "a.jpg");
         file.transferTo(tosave);
-        String sql = "UPDATE \"users\" SET avatar=? WHERE email=(?)::citext;";
+        String sql = "UPDATE profile SET avatar = ? FROM auth WHERE profile.user_id = auth.id AND auth.email = ?";
         jdbc.update(sql, user + "a.jpg", user);
     }
 
@@ -169,8 +174,7 @@ public class UserService {
 
     public BufferedImage loadAvatar(String user) throws IOException {
         String image = jdbc.queryForObject(
-                "SELECT avatar FROM \"users\" "
-                        + "WHERE email = ? LIMIT 1;",
+                "SELECT avatar FROM profile JOIN auth a on profile.user_id = a.id WHERE a.email = ?",
                 String.class, user
         );
         BufferedImage avatar = ImageIO.read(new File(PATH_AVATARS_FOLDER + image));

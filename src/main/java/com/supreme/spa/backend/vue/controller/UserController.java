@@ -162,7 +162,7 @@ public class UserController {
 
     @GetMapping(path = "/list/{page}")
     public ResponseEntity listOfUsers(@PathVariable("page") int page) {
-        List<User> users = userService.getListOfUsers(page);
+        List<Auth> users = userService.getListOfUsers(page);
         if (users == null || users.size() == 0) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new Message(UserStatus.NOT_FOUND));
         }
@@ -179,6 +179,12 @@ public class UserController {
         if (existsUser == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(new Message(UserStatus.NOT_FOUND));
+        }
+
+        List<String> skills = userService.getSkillsByUserEmail(existsUser.getEmail());
+        if (skills.size() > 0) {
+            String[] arraySkills = skills.toArray(new String[skills.size()]);
+            existsUser.setSkills(arraySkills);
         }
         return ResponseEntity.ok(existsUser);
     }

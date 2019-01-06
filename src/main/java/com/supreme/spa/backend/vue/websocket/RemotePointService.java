@@ -23,7 +23,7 @@ public class RemotePointService {
                 ChatMessage message = new ChatMessage();
                 message.setContent("Hello test");
                 webSocketSession.sendMessage(new TextMessage(gson.toJson(message)));
-                webSocketSession.close(new CloseStatus(403));
+//                webSocketSession.close(new CloseStatus(403));
             } catch (IOException e) {
                 e.printStackTrace();
             }
