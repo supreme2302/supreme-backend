@@ -1,9 +1,21 @@
 package com.supreme.spa.backend.vue.models;
+import java.sql.Timestamp;
 
 public class ChatMessage {
-    private String from;
-    private String to;
+    private int id;
+    private String sender;
+    private String recipient;
     private String content;
+    private Timestamp date;
+
+    public ChatMessage() {};
+    public ChatMessage(String sender, String recipient, String content, Timestamp date, int id) {
+        this.sender = sender;
+        this.recipient = recipient;
+        this.content = content;
+        this.date = date;
+        this.id = id;
+    }
 
     @Override
     public String toString() {
@@ -19,19 +31,36 @@ public class ChatMessage {
         this.content = content;
     }
 
-    public String getFrom() {
-        return from;
+    public Timestamp getDate() {
+        return date;
     }
 
-    public void setFrom(String from) {
-        this.from = from;
+    public void setDate(Timestamp date) {
+        this.date = date;
     }
 
-    public String getTo() {
-        return to;
+    public String getSender() {
+        return sender;
     }
 
-    public void setTo(String to) {
-        this.to = to;
+    public void setSender(String sender) {
+        this.sender = sender;
+    }
+
+    public String getRecipient() {
+        return recipient;
+    }
+
+    public void setRecipient(String recipient) {
+        this.recipient = recipient;
+    }
+
+
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
     }
 }

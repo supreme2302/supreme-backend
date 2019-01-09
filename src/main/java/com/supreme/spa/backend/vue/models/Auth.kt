@@ -15,7 +15,7 @@ class Auth {
     }
 
     fun checkPassword(pass: String): Boolean {
-        return passwordEncoder.matches(pass, this.password)
+        return passwordEncoder.matches(this.password, pass)
     }
 
     fun saltHash() {

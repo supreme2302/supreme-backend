@@ -2,13 +2,16 @@ package com.supreme.spa.backend.vue.websocket;
 
 import com.google.gson.Gson;
 import com.supreme.spa.backend.vue.models.ChatMessage;
+import com.supreme.spa.backend.vue.services.UserService;
 import org.jetbrains.annotations.NotNull;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 
 import java.io.IOException;
+import java.sql.Timestamp;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -17,16 +20,23 @@ public class RemotePointService {
     private final Map<String, WebSocketSession> sessions = new ConcurrentHashMap<>();
     private final Gson gson = new Gson();
 
+    private final UserService userService;
+
+    @Autowired
+    public RemotePointService(UserService userService) {
+        this.userService = userService;
+    }
+
     public void registerUser(@NotNull String user, @NotNull WebSocketSession webSocketSession) {
         if (sessions.containsKey(user)) {
-            try {
-                ChatMessage message = new ChatMessage();
-                message.setContent("Hello test");
-                webSocketSession.sendMessage(new TextMessage(gson.toJson(message)));
-//                webSocketSession.close(new CloseStatus(403));
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+//            try {
+//                ChatMessage message = new ChatMessage();
+//                message.setContent("Hello test");
+//                webSocketSession.sendMessage(new TextMessage(gson.toJson(message)));
+//                webSocketSession.close(new CloseStatus(1003));
+//            } catch (IOException e) {
+//                e.printStackTrace();
+//            }
             return;
         }
         sessions.put(user, webSocketSession);
@@ -52,6 +62,9 @@ public class RemotePointService {
 
     public void sendMessageToUser(@NotNull String user, @NotNull ChatMessage message) throws IOException {
         final WebSocketSession webSocketSession = sessions.get(user);
+        Timestamp timestamp = new Timestamp(System.currentTimeMillis());
+        message.setDate(timestamp);
+        userService.addMessage(message);
         if (webSocketSession == null) {
             throw new IOException("no session for user " + user);
         }

@@ -1,6 +1,7 @@
 package com.supreme.spa.backend.vue.services;
 
 import com.supreme.spa.backend.vue.models.Auth;
+import com.supreme.spa.backend.vue.models.ChatMessage;
 import com.supreme.spa.backend.vue.models.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DuplicateKeyException;
@@ -18,7 +19,6 @@ import java.io.IOException;
 import java.nio.file.Paths;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -30,6 +30,7 @@ public class UserService {
     private JdbcTemplate jdbc;
     private static final UserMapper userMapper = new UserMapper();
     private static final AuthMapper authMapper = new AuthMapper();
+    private static final MessageMapper messageMapper = new MessageMapper();
 
     @Autowired
     public UserService(JdbcTemplate jdbc) {
@@ -181,6 +182,17 @@ public class UserService {
         return avatar;
     }
 
+    public void addMessage(ChatMessage message) {
+        String sql = "INSERT INTO message(content, recipient, sender, message_date) VALUES (?, ?, ?, ?)";
+        jdbc.update(sql, message.getContent(), message.getRecipient(), message.getSender(), message.getDate());
+    }
+
+    public List<ChatMessage> getMessagesByEmails(String sender, String recipient) {
+        String sql = "SELECT * FROM message WHERE (sender = ? AND recipient = ?) "
+                + "OR (recipient = ? and sender = ?) ORDER BY message_date";
+        return jdbc.query(sql, messageMapper, sender, recipient, sender, recipient);
+    }
+
     private static final class UserMapper implements RowMapper<User> {
         @Override
         public User mapRow(ResultSet resultSet, int i) throws SQLException {
@@ -203,6 +215,19 @@ public class UserService {
             auth.setEmail(resultSet.getString("email"));
             auth.setUsername(resultSet.getString("username"));
             return auth;
+        }
+    }
+
+    private static final class MessageMapper implements RowMapper<ChatMessage> {
+        @Override
+        public ChatMessage mapRow(ResultSet resultSet, int i) throws SQLException {
+            ChatMessage message = new ChatMessage();
+            message.setId(resultSet.getInt("id"));
+            message.setRecipient(resultSet.getString("recipient"));
+            message.setSender(resultSet.getString("sender"));
+            message.setContent(resultSet.getString("content"));
+            message.setDate(resultSet.getTimestamp("message_date"));
+            return message;
         }
     }
 }

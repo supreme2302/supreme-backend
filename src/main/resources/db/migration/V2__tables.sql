@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS "auth" (
 CREATE TABLE IF NOT EXISTS "profile" (
   id SERIAL NOT NULL PRIMARY KEY ,
   user_id INTEGER REFERENCES auth(id),
-  phone CITEXT UNIQUE DEFAULT '',
+  phone CITEXT DEFAULT '',
   onpage BOOLEAN DEFAULT FALSE,
   about CITEXT default '',
   avatar TEXT DEFAULT 'peenge.png'
@@ -41,9 +41,10 @@ CREATE TABLE IF NOT EXISTS "profile_skill" (
 
 CREATE TABLE IF NOT EXISTS "message" (
   id SERIAL NOT NULL PRIMARY KEY ,
-  message CITEXT NOT NULL,
-  recipient INTEGER REFERENCES auth(id),
-  sender INTEGER REFERENCES auth(id)
+  content CITEXT NOT NULL,
+  recipient citext REFERENCES auth(email),
+  sender citext REFERENCES auth(email),
+  message_date TIMESTAMP WITH TIME ZONE
 );
 
 
@@ -60,6 +61,7 @@ select * from auth;
 select * from profile;
 select * from profile_skill;
 select * from skill;
+select * from message;
 
 insert into skill (skill_name) values ('drums');
 SELECT id from skill where skill_name = 'drumss';
@@ -71,4 +73,10 @@ join skill s on ps.skill_id = s.id
 join auth a on profile.user_id = a.id
 where email = 'd@d.ru';
 
+INSERT INTO content(content, recipient, sender) VALUES ('a', 'e@e.ru', 'a@a.ru');
+INSERT INTO content(content, recipient, sender) VALUES ('b', 'e@e.ru', 'a@a.ru');
+INSERT INTO content(content, recipient, sender) VALUES ('c', 'a@a.ru', 'e@e.ru');
+INSERT INTO content(content, recipient, sender) VALUES ('d', 'a@a.ru', 'e@e.ru');
+INSERT INTO content(content, recipient, sender) VALUES ('e', 'a@a.ru', 'f@f.ru');
 
+select * from content where (recipient = 'e@e.ru' and sender = 'a@a.ru') or (sender = 'e@e.ru' and recipient = 'a@a.ru');

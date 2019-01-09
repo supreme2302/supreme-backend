@@ -87,8 +87,7 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(new Message(UserStatus.ALREADY_AUTHENTICATED));
         }
-        if (auth.getEmail() == null || auth.getUsername() == null
-                || auth.getPassword() == null || auth.getConfirmPassword() == null) {
+        if (auth.getEmail() == null || auth.getPassword() == null) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(new Message(UserStatus.WRONG_CREDENTIALS));
         }

@@ -13,7 +13,11 @@ import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
+import javax.websocket.server.PathParam;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
 import static org.springframework.web.socket.CloseStatus.SERVER_ERROR;
 
 @Component
@@ -40,6 +44,12 @@ public class WebSocketHandler extends TextWebSocketHandler {
             return;
         }
         remotePointService.registerUser(user, webSocketSession);
+        try {
+            String[] params = webSocketSession.getUri().toString().split("/");
+            List<ChatMessage> messages = userService.getMessagesByEmails(user, params[2]);
+            webSocketSession.sendMessage(new TextMessage(gson.toJson(messages)));
+        } catch (IOException ignored) {}
+
     }
 
     @Override
@@ -58,9 +68,9 @@ public class WebSocketHandler extends TextWebSocketHandler {
     private void handleMessage(String user, TextMessage text) {
         final ChatMessage message;
         message = gson.fromJson(text.getPayload(), ChatMessage.class);
-        message.setFrom(user);
+        message.setSender(user);
         try {
-            remotePointService.sendMessageToUser(message.getTo(), message);
+            remotePointService.sendMessageToUser(message.getRecipient(), message);
         } catch (IOException e) {
             e.printStackTrace();
         }
