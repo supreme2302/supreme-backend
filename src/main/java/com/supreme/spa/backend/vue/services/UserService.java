@@ -2,6 +2,7 @@ package com.supreme.spa.backend.vue.services;
 
 import com.supreme.spa.backend.vue.models.Auth;
 import com.supreme.spa.backend.vue.models.ChatMessage;
+import com.supreme.spa.backend.vue.models.TotalUserData;
 import com.supreme.spa.backend.vue.models.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DuplicateKeyException;
@@ -19,6 +20,7 @@ import java.io.IOException;
 import java.nio.file.Paths;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -31,6 +33,7 @@ public class UserService {
     private static final UserMapper userMapper = new UserMapper();
     private static final AuthMapper authMapper = new AuthMapper();
     private static final MessageMapper messageMapper = new MessageMapper();
+    private static final TotalUserDataMapper totalUserDataMapper = new TotalUserDataMapper();
 
     @Autowired
     public UserService(JdbcTemplate jdbc) {
@@ -42,6 +45,14 @@ public class UserService {
         String sqlProfile = "INSERT INTO profile(user_id) VALUES (?)";
         Integer id = jdbc.queryForObject(sql, Integer.class, auth.getUsername(), auth.getEmail(), auth.getPassword());
         jdbc.update(sqlProfile, id);
+    }
+
+    public Auth testAuth(Auth auth) {
+        String sql = "INSERT INTO auth (username, email, password) VALUES (?, ?, ?) RETURNING id";
+        String sqlProfile = "INSERT INTO profile(user_id) VALUES (?)";
+        Integer id = jdbc.queryForObject(sql, Integer.class, auth.getUsername(), auth.getEmail(), auth.getPassword());
+        jdbc.update(sqlProfile, id);
+        return auth;
     }
 
     public String getAuthForCheck(String email) {
@@ -99,7 +110,7 @@ public class UserService {
     }
 
     private void updateUserSkills(int userId, String[] skills) {
-        for (String name: skills) {
+        for (String name : skills) {
             Integer skillId = getSkillIdByName(name);
             Integer profileId = getProfileIdByUserId(userId);
             if (skillId == null) {
@@ -139,7 +150,7 @@ public class UserService {
     }
 
     public List<Auth> getListOfUsers(int page) {
-        int limit = 15;
+        int limit = 6;
         int offset = (page - 1) * limit;
         String sql = "SELECT auth.id, email, username FROM auth "
                 + "JOIN profile p on auth.id = p.user_id "
@@ -152,13 +163,65 @@ public class UserService {
         }
     }
 
-    /**
-     * Function to save image on PC and db.
-     *
-     * @param file image to save
-     * @param user user to avatar
-     * @throws IOException if there is error(Handled in controller)
-     */
+    public List<TotalUserData> getTotalUsersData(int page, Boolean guitar, Boolean drums, Boolean piano) {
+        int limit = 6;
+        int offset = (page - 1) * limit;
+        StringBuilder sqlBuilder = new StringBuilder();
+        List<Object> list = new ArrayList<>();
+        sqlBuilder.append("select username, email, phone, about, skill_name from auth\n" +
+                "join profile p on auth.id = p.user_id\n" +
+                "join profile_skill skill on p.id = skill.profile_id\n" +
+                "join skill s on skill.skill_id = s.id\n" +
+                "where ");
+        if (guitar != null) {
+            sqlBuilder.append(" s.skill_name = ? ");
+            list.add(guitar);
+        }
+        if (drums != null) {
+            sqlBuilder.append(" s.skill_name = ? ");
+            list.add(drums);
+        }
+        if (piano != null) {
+            sqlBuilder.append(" s.skill_name = ? ");
+            list.add(piano);
+        }
+        sqlBuilder.append(" offset ? rows limit ?");
+        list.add(offset);
+        list.add(limit);
+        return jdbc.query(sqlBuilder.toString(), totalUserDataMapper, list);
+    }
+
+    public List<TotalUserData> getTotalUsersData(int page, ArrayList<String> skills) {
+        int limit = 6;
+        int offset = (page - 1) * limit;
+        StringBuilder sqlBuilder = new StringBuilder();
+        List<Object> list = new ArrayList<>();
+        sqlBuilder.append("select auth.id, username, email, about from auth\n" +
+                "join profile p on auth.id = p.user_id\n" +
+                "join profile_skill skill on p.id = skill.profile_id\n" +
+                "join skill s on skill.skill_id = s.id ");
+        if (skills != null) {
+            sqlBuilder.append(" where ");
+            for (int i = 0 ; i < skills.size(); ++i) {
+                sqlBuilder.append((i != 0) ? " or " : "").append(" s.skill_name = ? ");
+                list.add(skills.get(i).toLowerCase());
+            }
+        }
+        sqlBuilder.append("order by username offset ? rows limit ?");
+        list.add(offset);
+        list.add(limit);
+        return jdbc.query(sqlBuilder.toString(), list.toArray(), totalUserDataMapper);
+    }
+
+
+
+        /**
+         * Function to save image on PC and db.
+         *
+         * @param file image to save
+         * @param user user to avatar
+         * @throws IOException if there is error(Handled in controller)
+         */
     public void store(MultipartFile file, String user) throws IOException {
         File tosave = new File(PATH_AVATARS_FOLDER + user + "a.jpg");
         file.transferTo(tosave);
@@ -192,6 +255,7 @@ public class UserService {
                 + "OR (recipient = ? and sender = ?) ORDER BY message_date";
         return jdbc.query(sql, messageMapper, sender, recipient, sender, recipient);
     }
+
 
     private static final class UserMapper implements RowMapper<User> {
         @Override
@@ -228,6 +292,18 @@ public class UserService {
             message.setContent(resultSet.getString("content"));
             message.setDate(resultSet.getTimestamp("message_date"));
             return message;
+        }
+    }
+
+    private static final class TotalUserDataMapper implements RowMapper<TotalUserData> {
+        @Override
+        public TotalUserData mapRow(ResultSet resultSet, int i) throws SQLException {
+            TotalUserData totalUserData = new TotalUserData();
+            totalUserData.setId(resultSet.getInt("id"));
+            totalUserData.setEmail(resultSet.getString("email"));
+            totalUserData.setUsername(resultSet.getString("username"));
+            totalUserData.setAbout(resultSet.getString("about"));
+            return totalUserData;
         }
     }
 }

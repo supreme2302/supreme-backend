@@ -63,6 +63,8 @@ select * from profile_skill;
 select * from skill;
 select * from message;
 
+update profile_skill set skill_id = 4 where id = 6;
+
 insert into skill (skill_name) values ('drums');
 SELECT id from skill where skill_name = 'drumss';
 insert into profile_skill(profile_id, skill_id) VALUES (2,1);
@@ -79,4 +81,32 @@ INSERT INTO content(content, recipient, sender) VALUES ('c', 'a@a.ru', 'e@e.ru')
 INSERT INTO content(content, recipient, sender) VALUES ('d', 'a@a.ru', 'e@e.ru');
 INSERT INTO content(content, recipient, sender) VALUES ('e', 'a@a.ru', 'f@f.ru');
 
+insert into skill(skill_name) values ('guitar');
+insert into skill(skill_name) values ('piano');
+insert into skill(skill_name) values ('drums');
+
 select * from content where (recipient = 'e@e.ru' and sender = 'a@a.ru') or (sender = 'e@e.ru' and recipient = 'a@a.ru');
+
+
+select username, email, phone, about, skill_name from auth
+join profile p on auth.id = p.user_id
+join profile_skill skill on p.id = skill.profile_id
+join skill s on skill.skill_id = s.id
+where s.skill_name = 'Sandra Adamss' OR s.skill_name = 'drums'
+order by username desc offset 2 limit 1;
+
+
+select username, email, about from auth
+                join profile p on auth.id = p.user_id
+                join profile_skill skill on p.id = skill.profile_id
+                join skill s on skill.skill_id = s.id
+                where s.skill_name = 'Sandra Adams'
+                order by username
+                offset 1 rows limit 1;
+
+
+select auth.id, username, email, about from auth
+join profile p on auth.id = p.user_id
+join profile_skill skill on p.id = skill.profile_id
+join skill s on skill.skill_id = s.id
+where  s.skill_name = 'Guitar';

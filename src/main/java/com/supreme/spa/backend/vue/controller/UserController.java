@@ -1,11 +1,10 @@
 package com.supreme.spa.backend.vue.controller;
 
 
-import com.supreme.spa.backend.vue.models.Auth;
-import com.supreme.spa.backend.vue.models.Message;
-import com.supreme.spa.backend.vue.models.Profile;
-import com.supreme.spa.backend.vue.models.User;
+import com.supreme.spa.backend.vue.models.*;
 import com.supreme.spa.backend.vue.services.UserService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpStatus;
@@ -16,8 +15,10 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.imageio.ImageIO;
 import javax.servlet.http.HttpSession;
+import javax.websocket.server.PathParam;
 import java.awt.image.BufferedImage;
 import java.io.*;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -28,6 +29,8 @@ import java.util.Map;
 @CrossOrigin(origins = {"http://localhost:8080", "https://supreme-spa.firebaseapp.com"}, allowCredentials = "true")
 public class UserController {
     private final UserService userService;
+    private final Logger LOGGER = LoggerFactory.getLogger(UserController.class);
+
 
     @Autowired
     UserController(UserService userService) {
@@ -172,6 +175,31 @@ public class UserController {
                 .body(hashResp);
     }
 
+//    @GetMapping(path = "/list/{page}")
+//    public ResponseEntity listOfUsersWithParams(@PathVariable("page") int page,
+//                                                @RequestParam(value = "guitar", required = false) Boolean guitar,
+//                                                @RequestParam(value = "drums", required = false) Boolean drums,
+//                                                @RequestParam(value = "piano", required = false) Boolean piano) {
+//        List<TotalUserData> users = userService.getTotalUsersData(page, guitar, drums, piano);
+//        if (users == null || users.size() == 0) {
+//            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new Message(UserStatus.NOT_FOUND));
+//        }
+//        Map<String, Object> hashResp = new HashMap<>();
+//        hashResp.put("page", page + 1);
+//        hashResp.put("users", users);
+//        return ResponseEntity.ok(hashResp);
+//    }
+
+    @GetMapping(path = "/listt/{page}")
+    public ResponseEntity listOfUsersWithParams(@PathVariable("page") int page,
+                                                @RequestParam(value = "skill", required = false) ArrayList<String> skills) {
+        List<TotalUserData> users = userService.getTotalUsersData(page, skills);
+        Map<String, Object> hashResp = new HashMap<>();
+        hashResp.put("page", page + 1);
+        hashResp.put("users", users);
+        return ResponseEntity.ok(hashResp);
+    }
+
     @GetMapping(path = "/usercard/{id}")
     public ResponseEntity userCard(@PathVariable("id") int id) {
         User existsUser = userService.getUserById(id);
@@ -203,7 +231,7 @@ public class UserController {
     @PostMapping("/chava")
     public ResponseEntity changeAva(@RequestParam("image") MultipartFile file,
                                     HttpSession session) {
-        System.out.println("chava");
+        LOGGER.info("chava");
         if (session.getAttribute("user") == null) {
             session.invalidate();
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(
@@ -228,7 +256,7 @@ public class UserController {
     @GetMapping("/gava/{email}")
     public ResponseEntity getAva(HttpSession session,
                                  @PathVariable(name = "email") String email) {
-        System.out.println("gava");
+        LOGGER.info("gava");
         ByteArrayOutputStream bao = new ByteArrayOutputStream();
         final BufferedImage file;
         try {
@@ -248,3 +276,8 @@ public class UserController {
     }
 }
 
+// todo подгрузка на фронт скиллов с бэка
+// todo сделать универсальным метод подгрузки юзеров
+// todo open card backend onpage
+// todo не обновляются на горячую картинки в списке
+// todo на бэке добавить обновление скила (delete insert)

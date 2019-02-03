@@ -25,9 +25,12 @@ public class WebSocketHandler extends TextWebSocketHandler {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(WebSocketHandler.class);
     private static final CloseStatus ACCESS_DENIED = new CloseStatus(4500, "Not logged in. Access denied");
-    private final @NotNull UserService userService;
-    private final @NotNull RemotePointService remotePointService;
-    private final @NotNull Gson gson = new Gson();
+    private final @NotNull
+    UserService userService;
+    private final @NotNull
+    RemotePointService remotePointService;
+    private final @NotNull
+    Gson gson = new Gson();
 
     public WebSocketHandler(@NotNull UserService userService, @NotNull RemotePointService remotePointService) {
         this.userService = userService;
@@ -48,7 +51,8 @@ public class WebSocketHandler extends TextWebSocketHandler {
             String[] params = webSocketSession.getUri().toString().split("/");
             List<ChatMessage> messages = userService.getMessagesByEmails(user, params[2]);
             webSocketSession.sendMessage(new TextMessage(gson.toJson(messages)));
-        } catch (IOException ignored) {}
+        } catch (IOException ignored) {
+        }
 
     }
 

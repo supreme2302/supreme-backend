@@ -1,4 +1,5 @@
 package com.supreme.spa.backend.vue.models;
+
 import java.sql.Timestamp;
 
 public class ChatMessage {
@@ -8,7 +9,11 @@ public class ChatMessage {
     private String content;
     private Timestamp date;
 
-    public ChatMessage() {};
+    public ChatMessage() {
+    }
+
+    ;
+
     public ChatMessage(String sender, String recipient, String content, Timestamp date, int id) {
         this.sender = sender;
         this.recipient = recipient;
