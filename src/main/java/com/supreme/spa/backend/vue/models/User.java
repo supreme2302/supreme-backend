@@ -2,10 +2,11 @@ package com.supreme.spa.backend.vue.models;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.Data;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-
+@Data
 public class User {
     private int id;
     private String username;
@@ -13,6 +14,7 @@ public class User {
     private String phone;
     private String about;
     private String[] skills;
+    private String[] genres;
     private Boolean onpage;
 
 //    @JsonCreator
@@ -41,63 +43,63 @@ public class User {
 //    }
 
 
-    public int getId() {
-        return id;
-    }
-
-    public void setId(int id) {
-        this.id = id;
-    }
-
-    public String getUsername() {
-        return username;
-    }
-
-    public void setUsername(String username) {
-        this.username = username;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public Boolean checkConfirm(String password, String confirm) {
-        return password.equals(confirm);
-    }
-
-    public String getPhone() {
-        return phone;
-    }
-
-    public void setPhone(String phone) {
-        this.phone = phone;
-    }
-
-    public String getAbout() {
-        return about;
-    }
-
-    public void setAbout(String about) {
-        this.about = about;
-    }
-
-    public Boolean getOnpage() {
-        return onpage;
-    }
-
-    public void setOnpage(Boolean onpage) {
-        this.onpage = onpage;
-    }
-
-    public String[] getSkills() {
-        return skills;
-    }
-
-    public void setSkills(String[] skills) {
-        this.skills = skills;
-    }
+//    public int getId() {
+//        return id;
+//    }
+//
+//    public void setId(int id) {
+//        this.id = id;
+//    }
+//
+//    public String getUsername() {
+//        return username;
+//    }
+//
+//    public void setUsername(String username) {
+//        this.username = username;
+//    }
+//
+//    public String getEmail() {
+//        return email;
+//    }
+//
+//    public void setEmail(String email) {
+//        this.email = email;
+//    }
+//
+//    public Boolean checkConfirm(String password, String confirm) {
+//        return password.equals(confirm);
+//    }
+//
+//    public String getPhone() {
+//        return phone;
+//    }
+//
+//    public void setPhone(String phone) {
+//        this.phone = phone;
+//    }
+//
+//    public String getAbout() {
+//        return about;
+//    }
+//
+//    public void setAbout(String about) {
+//        this.about = about;
+//    }
+//
+//    public Boolean getOnpage() {
+//        return onpage;
+//    }
+//
+//    public void setOnpage(Boolean onpage) {
+//        this.onpage = onpage;
+//    }
+//
+//    public String[] getSkills() {
+//        return skills;
+//    }
+//
+//    public void setSkills(String[] skills) {
+//        this.skills = skills;
+//    }
 }

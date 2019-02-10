@@ -1,9 +1,6 @@
 package com.supreme.spa.backend.vue.services;
 
-import com.supreme.spa.backend.vue.models.Auth;
-import com.supreme.spa.backend.vue.models.ChatMessage;
-import com.supreme.spa.backend.vue.models.TotalUserData;
-import com.supreme.spa.backend.vue.models.User;
+import com.supreme.spa.backend.vue.models.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.dao.EmptyResultDataAccessException;
@@ -95,12 +92,12 @@ public class UserService {
         }
     }
 
-
     public int updateUserData(User user) {
         String sqlForUpdateProfile = "UPDATE profile SET phone = ?, about = ?, onpage = ? WHERE user_id = ?";
         try {
             jdbc.update(sqlForUpdateProfile, user.getPhone(), user.getAbout(), user.getOnpage(), user.getId());
             updateUserSkills(user.getId(), user.getSkills());
+            updateUserGenres(user.getId(), user.getGenres());
             return 200;
         } catch (EmptyResultDataAccessException error) {
             return 404;
@@ -110,9 +107,9 @@ public class UserService {
     }
 
     private void updateUserSkills(int userId, String[] skills) {
+        Integer profileId = getProfileIdByUserId(userId);
         for (String name : skills) {
             Integer skillId = getSkillIdByName(name);
-            Integer profileId = getProfileIdByUserId(userId);
             if (skillId == null) {
                 String sql = "INSERT INTO skill(skill_name) VALUES (?) RETURNING id";
                 skillId = jdbc.queryForObject(sql, Integer.class, name);
@@ -122,8 +119,30 @@ public class UserService {
         }
     }
 
+    private void updateUserGenres(int userId, String[] genres) {
+        Integer profileId = getProfileIdByUserId(userId);
+        for (String name: genres) {
+            Integer genreId = getGenreByName(name);
+            if (null == genreId) {
+                String sql = "INSERT INTO genre(genre_name) VALUES (?) RETURNING id";
+                genreId = jdbc.queryForObject(sql, Integer.class, name);
+            }
+            String sql = "INSERT INTO profile_genre(profile_id, genre_id) VALUES (?, ?)";
+            jdbc.update(sql, profileId, genreId);
+        }
+    }
+
     private Integer getSkillIdByName(String name) {
         String sql = "SELECT id FROM skill WHERE skill_name = ?";
+        try {
+            return jdbc.queryForObject(sql, Integer.class, name);
+        } catch (EmptyResultDataAccessException e) {
+            return null;
+        }
+    }
+
+    private Integer getGenreByName(String name) {
+        String sql = "SELECT id FROM genre WHERE genre_name = ?";
         try {
             return jdbc.queryForObject(sql, Integer.class, name);
         } catch (EmptyResultDataAccessException e) {
@@ -149,64 +168,87 @@ public class UserService {
         return jdbc.query(sql, ((resultSet, i) -> resultSet.getString("skill_name")), email);
     }
 
-    public List<Auth> getListOfUsers(int page) {
+    public List<TotalUserData> getListOfUsers(int page) {
         int limit = 6;
         int offset = (page - 1) * limit;
-        String sql = "SELECT auth.id, email, username FROM auth "
+        String sql = "SELECT auth.id, email, username, about FROM auth "
                 + "JOIN profile p on auth.id = p.user_id "
                 + "WHERE p.onpage = TRUE "
                 + "ORDER BY username OFFSET ? ROWS LIMIT ?";
         try {
-            return jdbc.query(sql, new Object[]{offset, limit}, authMapper);
+            return jdbc.query(sql, new Object[]{offset, limit}, totalUserDataMapper);
         } catch (EmptyResultDataAccessException error) {
             return null;
         }
     }
 
-    public List<TotalUserData> getTotalUsersData(int page, Boolean guitar, Boolean drums, Boolean piano) {
+    public List<TotalUserData> getUsersBySkills(int page, ArrayList<String> skills) {
         int limit = 6;
         int offset = (page - 1) * limit;
         StringBuilder sqlBuilder = new StringBuilder();
         List<Object> list = new ArrayList<>();
-        sqlBuilder.append("select username, email, phone, about, skill_name from auth\n" +
-                "join profile p on auth.id = p.user_id\n" +
-                "join profile_skill skill on p.id = skill.profile_id\n" +
-                "join skill s on skill.skill_id = s.id\n" +
-                "where ");
-        if (guitar != null) {
-            sqlBuilder.append(" s.skill_name = ? ");
-            list.add(guitar);
-        }
-        if (drums != null) {
-            sqlBuilder.append(" s.skill_name = ? ");
-            list.add(drums);
-        }
-        if (piano != null) {
-            sqlBuilder.append(" s.skill_name = ? ");
-            list.add(piano);
-        }
-        sqlBuilder.append(" offset ? rows limit ?");
-        list.add(offset);
-        list.add(limit);
-        return jdbc.query(sqlBuilder.toString(), totalUserDataMapper, list);
-    }
-
-    public List<TotalUserData> getTotalUsersData(int page, ArrayList<String> skills) {
-        int limit = 6;
-        int offset = (page - 1) * limit;
-        StringBuilder sqlBuilder = new StringBuilder();
-        List<Object> list = new ArrayList<>();
-        sqlBuilder.append("select auth.id, username, email, about from auth\n" +
+        sqlBuilder.append("select distinct auth.id, username, email, about from auth\n" +
                 "join profile p on auth.id = p.user_id\n" +
                 "join profile_skill skill on p.id = skill.profile_id\n" +
                 "join skill s on skill.skill_id = s.id ");
-        if (skills != null) {
-            sqlBuilder.append(" where ");
-            for (int i = 0 ; i < skills.size(); ++i) {
-                sqlBuilder.append((i != 0) ? " or " : "").append(" s.skill_name = ? ");
-                list.add(skills.get(i).toLowerCase());
-            }
+
+        sqlBuilder.append(" where ");
+        for (int i = 0; i < skills.size(); ++i) {
+            sqlBuilder.append((i != 0) ? " or " : "").append(" s.skill_name::citext = ?::citext ");
+            list.add(skills.get(i).toLowerCase());
         }
+        sqlBuilder.append(" and p.onpage = true ");
+        sqlBuilder.append("order by username offset ? rows limit ?");
+        list.add(offset);
+        list.add(limit);
+        return jdbc.query(sqlBuilder.toString(), list.toArray(), totalUserDataMapper);
+    }
+
+    public List<TotalUserData> getUsersByGenres(int page, ArrayList<String> genres) {
+        int limit = 6;
+        int offset = (page - 1) * limit;
+        StringBuilder sqlBuilder = new StringBuilder();
+        List<Object> list = new ArrayList<>();
+        sqlBuilder.append("select distinct auth.id, username, email, about from auth\n" +
+                "join profile p on auth.id = p.user_id\n" +
+                "join profile_genre pg on p.id = pg.profile_id\n" +
+                "join genre g on pg.genre_id = g.id");
+
+        sqlBuilder.append(" where ");
+        for (int i = 0; i < genres.size(); ++i) {
+            sqlBuilder.append((i != 0) ? " or " : "").append(" g.genre_name::citext = ?::citext ");
+            list.add(genres.get(i).toLowerCase());
+        }
+        sqlBuilder.append(" and p.onpage = true ");
+        sqlBuilder.append("order by username offset ? rows limit ?");
+        list.add(offset);
+        list.add(limit);
+        return jdbc.query(sqlBuilder.toString(), list.toArray(), totalUserDataMapper);
+    }
+
+    public List<TotalUserData> getUsersBySkillsAndGenres(int page, ArrayList<String> skills, ArrayList<String> genres) {
+        int limit = 6;
+        int offset = (page - 1) * limit;
+        StringBuilder sqlBuilder = new StringBuilder();
+        List<Object> list = new ArrayList<>();
+        sqlBuilder.append("select distinct auth.id, username, email, about from auth\n" +
+                "join profile p on auth.id = p.user_id\n" +
+                "join profile_skill skill on p.id = skill.profile_id\n" +
+                "join skill s on skill.skill_id = s.id\n" +
+                "join profile_genre pg on p.id = pg.profile_id\n" +
+                "join genre g on pg.genre_id = g.id");
+
+        sqlBuilder.append(" where ");
+        for (int i = 0; i < skills.size(); ++i) {
+            sqlBuilder.append((i != 0) ? " or " : "").append(" s.skill_name::citext = ?::citext ");
+            list.add(skills.get(i).toLowerCase());
+        }
+        sqlBuilder.append(" and ");
+        for (int i = 0; i < genres.size(); ++i) {
+            sqlBuilder.append((i != 0) ? " or " : "").append(" g.genre_name::citext = ?::citext ");
+            list.add(genres.get(i).toLowerCase());
+        }
+        sqlBuilder.append(" and p.onpage = true ");
         sqlBuilder.append("order by username offset ? rows limit ?");
         list.add(offset);
         list.add(limit);
@@ -214,14 +256,13 @@ public class UserService {
     }
 
 
-
-        /**
-         * Function to save image on PC and db.
-         *
-         * @param file image to save
-         * @param user user to avatar
-         * @throws IOException if there is error(Handled in controller)
-         */
+    /**
+     * Function to save image on PC and db.
+     *
+     * @param file image to save
+     * @param user user to avatar
+     * @throws IOException if there is error(Handled in controller)
+     */
     public void store(MultipartFile file, String user) throws IOException {
         File tosave = new File(PATH_AVATARS_FOLDER + user + "a.jpg");
         file.transferTo(tosave);
@@ -256,6 +297,15 @@ public class UserService {
         return jdbc.query(sql, messageMapper, sender, recipient, sender, recipient);
     }
 
+    public List<String> getAllSkills() {
+        String sql = "SELECT * FROM skill";
+        return jdbc.query(sql, (resultSet, i) -> resultSet.getString("skill_name"));
+    }
+
+    public List<String> getAllGenres() {
+        String sql = "SELECT * FROM genre";
+        return jdbc.query(sql, (resultSet, i) -> resultSet.getString("genre_name"));
+    }
 
     private static final class UserMapper implements RowMapper<User> {
         @Override

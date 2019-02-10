@@ -162,38 +162,35 @@ public class UserController {
 
     }
 
-    @GetMapping(path = "/list/{page}")
-    public ResponseEntity listOfUsers(@PathVariable("page") int page) {
-        List<Auth> users = userService.getListOfUsers(page);
-        if (users == null || users.size() == 0) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new Message(UserStatus.NOT_FOUND));
-        }
-        Map<String, Object> hashResp = new HashMap<>();
-        hashResp.put("page", page + 1);
-        hashResp.put("users", users);
-        return ResponseEntity.status(HttpStatus.OK)
-                .body(hashResp);
-    }
-
 //    @GetMapping(path = "/list/{page}")
-//    public ResponseEntity listOfUsersWithParams(@PathVariable("page") int page,
-//                                                @RequestParam(value = "guitar", required = false) Boolean guitar,
-//                                                @RequestParam(value = "drums", required = false) Boolean drums,
-//                                                @RequestParam(value = "piano", required = false) Boolean piano) {
-//        List<TotalUserData> users = userService.getTotalUsersData(page, guitar, drums, piano);
+//    public ResponseEntity listOfUsers(@PathVariable("page") int page) {
+//        List<Auth> users = userService.getListOfUsers(page);
 //        if (users == null || users.size() == 0) {
 //            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new Message(UserStatus.NOT_FOUND));
 //        }
 //        Map<String, Object> hashResp = new HashMap<>();
 //        hashResp.put("page", page + 1);
 //        hashResp.put("users", users);
-//        return ResponseEntity.ok(hashResp);
+//        return ResponseEntity.status(HttpStatus.OK)
+//                .body(hashResp);
 //    }
 
-    @GetMapping(path = "/listt/{page}")
+    @GetMapping(path = "/list/{page}")
     public ResponseEntity listOfUsersWithParams(@PathVariable("page") int page,
-                                                @RequestParam(value = "skill", required = false) ArrayList<String> skills) {
-        List<TotalUserData> users = userService.getTotalUsersData(page, skills);
+                                                @RequestParam(value = "skill", required = false) ArrayList<String> skills,
+                                                @RequestParam(value = "genre", required = false) ArrayList<String> genres) {
+        List<TotalUserData> users;
+        if (null == skills && null == genres) {
+            users = userService.getListOfUsers(page);
+        } else if (null != skills && null == genres) {
+            users = userService.getUsersBySkills(page, skills);
+        } else if (null == skills && null != genres) {
+            users = userService.getUsersByGenres(page, genres);
+        } else {
+            users = userService.getUsersBySkillsAndGenres(page, skills, genres);
+        }
+
+
         Map<String, Object> hashResp = new HashMap<>();
         hashResp.put("page", page + 1);
         hashResp.put("users", users);
@@ -256,7 +253,6 @@ public class UserController {
     @GetMapping("/gava/{email}")
     public ResponseEntity getAva(HttpSession session,
                                  @PathVariable(name = "email") String email) {
-        LOGGER.info("gava");
         ByteArrayOutputStream bao = new ByteArrayOutputStream();
         final BufferedImage file;
         try {
@@ -273,6 +269,16 @@ public class UserController {
         }
 
         return ResponseEntity.ok(bao.toByteArray());
+    }
+
+    @GetMapping(path = "/skills")
+    public ResponseEntity getAllSkills() {
+        return ResponseEntity.ok(userService.getAllSkills());
+    }
+
+    @GetMapping(path = "/genres")
+    public ResponseEntity getAllGenres() {
+        return ResponseEntity.ok(userService.getAllGenres());
     }
 }
 
