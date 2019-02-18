@@ -42,6 +42,7 @@ public class UserController {
         SUCCESSFULLY_AUTHED,
         SUCCESSFULLY_LOGGED_OUT,
         SUCCESSFULLY_CHANGED,
+        SUCCESSFULLY_CREATED,
         ACCESS_ERROR,
         WRONG_CREDENTIALS,
         NOT_UNIQUE_USERNAME_OR_EMAIL,
@@ -134,9 +135,14 @@ public class UserController {
             return ResponseEntity.ok(authUser);
         }
         List<String> skills = userService.getSkillsByUserEmail(userEmail);
+        List<String> genres = userService.getGenresByUserEmail(userEmail);
         if (skills.size() > 0) {
             String[] arraySkills = skills.toArray(new String[skills.size()]);
             user.setSkills(arraySkills);
+        }
+        if (genres.size() > 0) {
+            String[] arrayGenres = genres.toArray(new String[genres.size()]);
+            user.setGenres(arrayGenres);
         }
         return ResponseEntity.ok(user);
     }
@@ -206,9 +212,14 @@ public class UserController {
         }
 
         List<String> skills = userService.getSkillsByUserEmail(existsUser.getEmail());
+        List<String> genres = userService.getGenresByUserEmail(existsUser.getEmail());
         if (skills.size() > 0) {
             String[] arraySkills = skills.toArray(new String[skills.size()]);
             existsUser.setSkills(arraySkills);
+        }
+        if (genres.size() > 0) {
+            String[] arrayGenres = genres.toArray(new String[genres.size()]);
+            existsUser.setGenres(arrayGenres);
         }
         return ResponseEntity.ok(existsUser);
     }
@@ -228,7 +239,6 @@ public class UserController {
     @PostMapping("/chava")
     public ResponseEntity changeAva(@RequestParam("image") MultipartFile file,
                                     HttpSession session) {
-        LOGGER.info("chava");
         if (session.getAttribute("user") == null) {
             session.invalidate();
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(
@@ -280,10 +290,23 @@ public class UserController {
     public ResponseEntity getAllGenres() {
         return ResponseEntity.ok(userService.getAllGenres());
     }
+
+    @PostMapping(path = "/add-comment")
+    public ResponseEntity addComment(@RequestBody Comment comment, HttpSession session) {
+        Object userSession = session.getAttribute("user");
+        if (userSession == null) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(UserStatus.ACCESS_ERROR);
+        }
+        userService.addComment(comment);
+        return ResponseEntity.status(HttpStatus.CREATED).body(UserStatus.SUCCESSFULLY_CREATED);
+    }
+
+    @GetMapping(path = "/get-comments/{userId}")
+    public ResponseEntity getComments(@PathVariable(name = "userId") String userId) {
+        return ResponseEntity.ok(userService.getCommentsByUserId(userId));
+    }
 }
 
-// todo подгрузка на фронт скиллов с бэка
-// todo сделать универсальным метод подгрузки юзеров
-// todo open card backend onpage
-// todo не обновляются на горячую картинки в списке
+// todo на бэке добавить отзывы с рейтингом
 // todo на бэке добавить обновление скила (delete insert)
+// todo open card backend onpage

@@ -1,6 +1,8 @@
 CREATE EXTENSION IF NOT EXISTS citext;
 
 drop table IF exists "auth" cascade ;
+drop table if exists "comment" cascade ;
+drop table if exists "comment_counter" cascade ;
 drop table if exists "profile" cascade ;
 drop table if exists "profile_skill" cascade ;
 drop table if exists "skill" cascade ;
@@ -15,12 +17,29 @@ CREATE TABLE IF NOT EXISTS "auth" (
   password TEXT NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS "comment" (
+  id SERIAL NOT NULL PRIMARY KEY,
+  user_id INTEGER NOT NULL REFERENCES auth(id),
+  username CITEXT NOT NULL REFERENCES auth(username),
+  comment_val CITEXT NOT NULL,
+  rating INTEGER NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS "comment_counter" (
+  id SERIAL NOT NULL PRIMARY KEY,
+  user_id INTEGER NOT NULL REFERENCES auth(id),
+  counter INTEGER DEFAULT 0,
+  sum_rating REAL DEFAULT 0
+);
+
+
 CREATE TABLE IF NOT EXISTS "profile" (
   id SERIAL NOT NULL PRIMARY KEY ,
   user_id INTEGER REFERENCES auth(id),
   phone CITEXT DEFAULT '',
   onpage BOOLEAN DEFAULT FALSE,
   about CITEXT default '',
+  rating REAL DEFAULT 0,
   avatar TEXT DEFAULT 'peenge.png'
 );
 
@@ -61,7 +80,6 @@ CREATE TABLE IF NOT EXISTS "message" (
 INSERT INTO skill (skill_name) VALUES ('drums');
 INSERT INTO skill (skill_name) VALUES ('guitar');
 INSERT INTO skill (skill_name) VALUES ('bass');
-INSERT INTO skill (skill_name) VALUES ('keys');
 INSERT INTO skill (skill_name) VALUES ('keyboards');
 
 INSERT INTO genre (genre_name) VALUES ('pop');
@@ -162,3 +180,9 @@ where  g.genre_name::citext = ?::citext
  and  g.genre_name::citext = ?::citext
  and p.onpage = true
  order by username offset ? rows limit ?;
+
+
+insert into comment_counter(user_id) values (1);
+select * from comment_counter;
+update comment_counter set counter = counter + 1, sum_rating = sum_rating + 5;
+select (sum_rating / counter) from comment_counter;

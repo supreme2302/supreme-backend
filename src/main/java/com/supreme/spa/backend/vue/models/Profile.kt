@@ -8,4 +8,5 @@ class Profile {
     var about: String? = null
     var skills: String? = null
     var userId: Int? = 0
+    var rating: Float? = 0.0f
 }

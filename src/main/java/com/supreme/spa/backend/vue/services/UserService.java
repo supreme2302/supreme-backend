@@ -21,7 +21,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Service
-@Transactional
 public class UserService {
     public static final String PATH_AVATARS_FOLDER = Paths.get("uploads")
             .toAbsolutePath().toString() + '/';
@@ -31,19 +30,24 @@ public class UserService {
     private static final AuthMapper authMapper = new AuthMapper();
     private static final MessageMapper messageMapper = new MessageMapper();
     private static final TotalUserDataMapper totalUserDataMapper = new TotalUserDataMapper();
+    private static final CommentMapper commentMapper = new CommentMapper();
 
     @Autowired
     public UserService(JdbcTemplate jdbc) {
         this.jdbc = jdbc;
     }
 
+    @Transactional
     public void createUser(Auth auth) {
         String sql = "INSERT INTO auth (username, email, password) VALUES (?, ?, ?) RETURNING id";
         String sqlProfile = "INSERT INTO profile(user_id) VALUES (?)";
+        String sqlCommentCounter = "INSERT INTO comment_counter(user_id) VALUES (?)";
         Integer id = jdbc.queryForObject(sql, Integer.class, auth.getUsername(), auth.getEmail(), auth.getPassword());
         jdbc.update(sqlProfile, id);
+        jdbc.update(sqlCommentCounter, id);
     }
 
+    @Transactional
     public Auth testAuth(Auth auth) {
         String sql = "INSERT INTO auth (username, email, password) VALUES (?, ?, ?) RETURNING id";
         String sqlProfile = "INSERT INTO profile(user_id) VALUES (?)";
@@ -92,6 +96,7 @@ public class UserService {
         }
     }
 
+    @Transactional
     public int updateUserData(User user) {
         String sqlForUpdateProfile = "UPDATE profile SET phone = ?, about = ?, onpage = ? WHERE user_id = ?";
         try {
@@ -106,7 +111,8 @@ public class UserService {
         }
     }
 
-    private void updateUserSkills(int userId, String[] skills) {
+    @Transactional
+    void updateUserSkills(int userId, String[] skills) {
         Integer profileId = getProfileIdByUserId(userId);
         for (String name : skills) {
             Integer skillId = getSkillIdByName(name);
@@ -119,7 +125,8 @@ public class UserService {
         }
     }
 
-    private void updateUserGenres(int userId, String[] genres) {
+    @Transactional
+    void updateUserGenres(int userId, String[] genres) {
         Integer profileId = getProfileIdByUserId(userId);
         for (String name: genres) {
             Integer genreId = getGenreByName(name);
@@ -307,6 +314,33 @@ public class UserService {
         return jdbc.query(sql, (resultSet, i) -> resultSet.getString("genre_name"));
     }
 
+    public List<String> getGenresByUserEmail(String userEmail) {
+        String sql = "select genre_name from profile\n" +
+                "join profile_genre pg on profile.id = pg.profile_id\n" +
+                "join genre g on pg.genre_id = g.id\n" +
+                "join auth a on profile.user_id = a.id\n" +
+                "where email = ?";
+        return jdbc.query(sql, ((resultSet, i) -> resultSet.getString("genre_name")), userEmail);
+    }
+
+    @Transactional
+    public void addComment(Comment comment) {
+        String sqlForInsertIntoComment = "INSERT INTO comment(user_id, username, comment_val, rating) VALUES (?, ?, ?, ?)";
+        String sqlForInsertIntoCommentsCounter = "UPDATE comment_counter SET counter = counter + 1, "
+                + "sum_rating = sum_rating + ? WHERE user_id = ?";
+        String sqlForUpdateProfile = "UPDATE profile SET rating = "
+                + "(SELECT sum_rating / counter  FROM comment_counter WHERE comment_counter.user_id = ?) WHERE user_id = ?";
+        jdbc.update(sqlForInsertIntoComment, comment.getUserId(), comment.getUsername(),
+                comment.getCommentVal(), comment.getRating());
+        jdbc.update(sqlForInsertIntoCommentsCounter, comment.getRating(), comment.getUserId());
+        jdbc.update(sqlForUpdateProfile, comment.getUserId(), comment.getUserId());
+    }
+
+    public List<Comment> getCommentsByUserId(String userId) {
+        String sql = "SELECT * from comment where user_id = ?";
+        return jdbc.query(sql, commentMapper, userId);
+    }
+
     private static final class UserMapper implements RowMapper<User> {
         @Override
         public User mapRow(ResultSet resultSet, int i) throws SQLException {
@@ -354,6 +388,19 @@ public class UserService {
             totalUserData.setUsername(resultSet.getString("username"));
             totalUserData.setAbout(resultSet.getString("about"));
             return totalUserData;
+        }
+    }
+
+    private static final class CommentMapper implements RowMapper<Comment> {
+        @Override
+        public Comment mapRow(ResultSet resultSet, int i) throws SQLException {
+            Comment comment = new Comment();
+            comment.setId(resultSet.getInt("id"));
+            comment.setUserId(resultSet.getInt("user_id"));
+            comment.setUsername(resultSet.getString("username"));
+            comment.setCommentVal(resultSet.getString("comment_val"));
+            comment.setRating(resultSet.getInt("rating"));
+            return comment;
         }
     }
 }
