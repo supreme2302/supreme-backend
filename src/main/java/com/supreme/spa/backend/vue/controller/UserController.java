@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.imageio.ImageIO;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import javax.websocket.server.PathParam;
 import java.awt.image.BufferedImage;
@@ -113,7 +114,7 @@ public class UserController {
     @PostMapping(path = "/logout")
     public ResponseEntity logout(HttpSession session) {
         if (session.getAttribute("user") == null) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(new Message(UserStatus.ACCESS_ERROR));
         }
         session.invalidate();
@@ -165,7 +166,6 @@ public class UserController {
                     .body(new Message(UserStatus.NOT_UNIQUE_PHONE));
         }
         return ResponseEntity.ok(new Message(UserStatus.SUCCESSFULLY_CHANGED));
-
     }
 
 //    @GetMapping(path = "/list/{page}")
