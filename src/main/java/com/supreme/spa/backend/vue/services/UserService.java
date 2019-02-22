@@ -47,15 +47,6 @@ public class UserService {
         jdbc.update(sqlCommentCounter, id);
     }
 
-    @Transactional
-    public Auth testAuth(Auth auth) {
-        String sql = "INSERT INTO auth (username, email, password) VALUES (?, ?, ?) RETURNING id";
-        String sqlProfile = "INSERT INTO profile(user_id) VALUES (?)";
-        Integer id = jdbc.queryForObject(sql, Integer.class, auth.getUsername(), auth.getEmail(), auth.getPassword());
-        jdbc.update(sqlProfile, id);
-        return auth;
-    }
-
     public String getAuthForCheck(String email) {
         String sql = "SELECT password FROM auth WHERE LOWER(email) = LOWER(?)";
         try {
@@ -114,6 +105,8 @@ public class UserService {
     @Transactional
     void updateUserSkills(int userId, String[] skills) {
         Integer profileId = getProfileIdByUserId(userId);
+        String deleteSql = "DELETE FROM profile_skill WHERE profile_id = ?";
+        jdbc.update(deleteSql, profileId);
         for (String name : skills) {
             Integer skillId = getSkillIdByName(name);
             if (skillId == null) {
@@ -128,6 +121,8 @@ public class UserService {
     @Transactional
     void updateUserGenres(int userId, String[] genres) {
         Integer profileId = getProfileIdByUserId(userId);
+        String deleteSql = "DELETE FROM profile_genre WHERE profile_id = ?";
+        jdbc.update(deleteSql, profileId);
         for (String name: genres) {
             Integer genreId = getGenreByName(name);
             if (null == genreId) {

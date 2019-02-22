@@ -43,8 +43,6 @@ public class VueApplicationTests {
             Charset.forName("utf8"));
 
 
-
-
     @Autowired
     private WebApplicationContext wac;
 
@@ -239,5 +237,26 @@ public class VueApplicationTests {
                 .andExpect(content().json(
                         LocalStorage.changedProfile
                 ));
+    }
+
+
+    @Test
+    @Sql(value = {"/test-set-before.sql"}, executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
+    public void userCardTestOk() throws Exception {
+        Auth auth = new Auth();
+        auth.setEmail("exist3@e.ru");
+        auth.setUsername("userWithProfileAndSkillsAndGenres");
+        auth.setPassword("123");
+        auth.setConfirmPassword("123");
+        Cookie[] allCookies = this.mockMvc.perform(post("/users/auth")
+                .contentType(contentType)
+                .content(gson.toJson(auth))).andReturn().getResponse().getCookies();
+        this.mockMvc.perform(get("/users/usercard/2")
+                .cookie(allCookies)
+                .contentType(contentType)
+        )
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(content().json(LocalStorage.fullProfile));
     }
 }

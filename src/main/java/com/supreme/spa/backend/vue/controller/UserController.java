@@ -305,6 +305,5 @@ public class UserController {
     }
 }
 
-// todo на бэке добавить обновление скила (delete insert) (changeOkTest падает), аналогично с жанрами
 // todo на бэке добавить отзывы с рейтингом
 // todo open card backend onpage
