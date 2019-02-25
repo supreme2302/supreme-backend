@@ -189,7 +189,7 @@ public class UserService {
         int offset = (page - 1) * limit;
         StringBuilder sqlBuilder = new StringBuilder();
         List<Object> list = new ArrayList<>();
-        sqlBuilder.append("select distinct auth.id, fromUsername, email, about from auth\n" +
+        sqlBuilder.append("select distinct auth.id, username, email, about from auth\n" +
                 "join profile p on auth.id = p.user_id\n" +
                 "join profile_skill skill on p.id = skill.profile_id\n" +
                 "join skill s on skill.skill_id = s.id ");
@@ -200,7 +200,7 @@ public class UserService {
             list.add(skills.get(i).toLowerCase());
         }
         sqlBuilder.append(" and p.onpage = true ");
-        sqlBuilder.append("order by fromUsername offset ? rows limit ?");
+        sqlBuilder.append("order by username offset ? rows limit ?");
         list.add(offset);
         list.add(limit);
         return jdbc.query(sqlBuilder.toString(), list.toArray(), totalUserDataMapper);
@@ -211,7 +211,7 @@ public class UserService {
         int offset = (page - 1) * limit;
         StringBuilder sqlBuilder = new StringBuilder();
         List<Object> list = new ArrayList<>();
-        sqlBuilder.append("select distinct auth.id, fromUsername, email, about from auth\n" +
+        sqlBuilder.append("select distinct auth.id, username, email, about from auth\n" +
                 "join profile p on auth.id = p.user_id\n" +
                 "join profile_genre pg on p.id = pg.profile_id\n" +
                 "join genre g on pg.genre_id = g.id");
@@ -222,7 +222,7 @@ public class UserService {
             list.add(genres.get(i).toLowerCase());
         }
         sqlBuilder.append(" and p.onpage = true ");
-        sqlBuilder.append("order by fromUsername offset ? rows limit ?");
+        sqlBuilder.append("order by username offset ? rows limit ?");
         list.add(offset);
         list.add(limit);
         return jdbc.query(sqlBuilder.toString(), list.toArray(), totalUserDataMapper);
@@ -233,7 +233,7 @@ public class UserService {
         int offset = (page - 1) * limit;
         StringBuilder sqlBuilder = new StringBuilder();
         List<Object> list = new ArrayList<>();
-        sqlBuilder.append("select distinct auth.id, fromUsername, email, about from auth\n" +
+        sqlBuilder.append("select distinct auth.id, username, email, about from auth\n" +
                 "join profile p on auth.id = p.user_id\n" +
                 "join profile_skill skill on p.id = skill.profile_id\n" +
                 "join skill s on skill.skill_id = s.id\n" +
@@ -251,7 +251,7 @@ public class UserService {
             list.add(genres.get(i).toLowerCase());
         }
         sqlBuilder.append(" and p.onpage = true ");
-        sqlBuilder.append("order by fromUsername offset ? rows limit ?");
+        sqlBuilder.append("order by username offset ? rows limit ?");
         list.add(offset);
         list.add(limit);
         return jdbc.query(sqlBuilder.toString(), list.toArray(), totalUserDataMapper);
@@ -275,7 +275,7 @@ public class UserService {
     /**
      * load.
      *
-     * @param user is fromUsername
+     * @param user is username
      * @return avatar
      */
 
@@ -358,7 +358,7 @@ public class UserService {
             Auth auth = new Auth();
             auth.setId(resultSet.getInt("id"));
             auth.setEmail(resultSet.getString("email"));
-            auth.setUsername(resultSet.getString("fromUsername"));
+            auth.setUsername(resultSet.getString("username"));
             return auth;
         }
     }
@@ -382,7 +382,7 @@ public class UserService {
             TotalUserData totalUserData = new TotalUserData();
             totalUserData.setId(resultSet.getInt("id"));
             totalUserData.setEmail(resultSet.getString("email"));
-            totalUserData.setUsername(resultSet.getString("fromUsername"));
+            totalUserData.setUsername(resultSet.getString("username"));
             totalUserData.setAbout(resultSet.getString("about"));
             return totalUserData;
         }

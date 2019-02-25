@@ -341,4 +341,31 @@ public class VueApplicationTests {
                 .andExpect(status().isOk())
                 .andExpect(content().string(LocalStorage.commentList));
     }
+
+    @Test
+    @Sql(value = {"/test-set-before.sql"}, executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
+    public void listOfUsersWithParamsTest() throws Exception {
+        this.mockMvc.perform(get("/users/list/1?skill=drums&genre=jazz")
+                .contentType(contentType)
+        )
+                .andDo(print())
+                .andExpect(status().isOk());
+        this.mockMvc.perform(get("/users/list/1?genre=jazz")
+                .contentType(contentType)
+        )
+                .andDo(print())
+                .andExpect(status().isOk());
+        this.mockMvc.perform(get("/users/list/1?skill=drums")
+                .contentType(contentType)
+        )
+                .andDo(print())
+                .andExpect(status().isOk());
+        this.mockMvc.perform(get("/users/list/1")
+                .contentType(contentType)
+        )
+                .andDo(print())
+                .andExpect(status().isOk());
+    }
+
+    //todo можно добавить проверку тела в тест на список пользователей
 }
