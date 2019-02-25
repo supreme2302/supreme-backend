@@ -20,7 +20,7 @@ public class User {
 //    @JsonCreator
 //    public User(
 //            @JsonProperty("id") int id,
-//            @JsonProperty("username") String username,
+//            @JsonProperty("fromUsername") String fromUsername,
 //            @JsonProperty("email") String email,
 //            @JsonProperty("password") String password,
 //            @JsonProperty("confirmPassword") String confirmPassword,
@@ -29,7 +29,7 @@ public class User {
 //            @JsonProperty("skills") String skills,
 //            @JsonProperty("onpage") Boolean onpage) {
 //        this.id = id;
-//        this.username = username;
+//        this.fromUsername = fromUsername;
 //        this.email = email;
 //        this.password = password;
 //        this.confirmPassword = confirmPassword;
@@ -51,12 +51,12 @@ public class User {
 //        this.id = id;
 //    }
 //
-//    public String getUsername() {
-//        return username;
+//    public String getFromUsername() {
+//        return fromUsername;
 //    }
 //
-//    public void setUsername(String username) {
-//        this.username = username;
+//    public void setFromUsername(String fromUsername) {
+//        this.fromUsername = fromUsername;
 //    }
 //
 //    public String getEmail() {

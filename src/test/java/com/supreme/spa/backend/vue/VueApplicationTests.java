@@ -1,6 +1,7 @@
 package com.supreme.spa.backend.vue;
 import com.google.gson.Gson;
 import com.supreme.spa.backend.vue.models.Auth;
+import com.supreme.spa.backend.vue.models.Comment;
 import com.supreme.spa.backend.vue.models.User;
 import com.supreme.spa.backend.vue.resource.LocalStorage;
 import org.junit.Before;
@@ -177,7 +178,7 @@ public class VueApplicationTests {
         )
                 .andDo(print())
                 .andExpect(status().isOk())
-                .andExpect(content().json(
+                .andExpect(content().string(
                         LocalStorage.emptyProfile
                 ));
     }
@@ -199,7 +200,7 @@ public class VueApplicationTests {
         )
                 .andDo(print())
                 .andExpect(status().isOk())
-                .andExpect(content().json(
+                .andExpect(content().string(
                         LocalStorage.fullProfile
                 ));
     }
@@ -234,7 +235,7 @@ public class VueApplicationTests {
         )
                 .andDo(print())
                 .andExpect(status().isOk())
-                .andExpect(content().json(
+                .andExpect(content().string(
                         LocalStorage.changedProfile
                 ));
     }
@@ -257,6 +258,87 @@ public class VueApplicationTests {
         )
                 .andDo(print())
                 .andExpect(status().isOk())
-                .andExpect(content().json(LocalStorage.fullProfile));
+                .andExpect(content().string(LocalStorage.fullProfile));
+    }
+
+    @Test
+    @Sql(value = {"/test-set-before.sql"}, executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
+    public void addCommentTestOk() throws Exception {
+        Auth auth = new Auth();
+        auth.setEmail("exist3@e.ru");
+        auth.setUsername("userWithProfileAndSkillsAndGenres");
+        auth.setPassword("123");
+        auth.setConfirmPassword("123");
+        Cookie[] allCookies = this.mockMvc.perform(post("/users/auth")
+                .contentType(contentType)
+                .content(gson.toJson(auth))).andReturn().getResponse().getCookies();
+        Comment comment = new Comment();
+        comment.setToUserId(1);
+        comment.setFromUsername("userWithProfileAndSkillsAndGenres");
+        comment.setFromEmail("exist3@e.ru");
+        comment.setRating(5);
+        comment.setCommentVal("Not bad");
+        this.mockMvc.perform(post("/users/add-comment")
+                .cookie(allCookies)
+                .contentType(contentType)
+                .content(gson.toJson(comment))
+        )
+                .andDo(print())
+                .andExpect(status().isCreated());
+    }
+
+    @Test
+    @Sql(value = {"/test-set-before.sql"}, executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
+    public void addCommentByWrongUserTestForbidden() throws Exception {
+        Auth auth = new Auth();
+        auth.setEmail("exist3@e.ru");
+        auth.setUsername("userWithProfileAndSkillsAndGenres");
+        auth.setPassword("123");
+        auth.setConfirmPassword("123");
+        Cookie[] allCookies = this.mockMvc.perform(post("/users/auth")
+                .contentType(contentType)
+                .content(gson.toJson(auth))).andReturn().getResponse().getCookies();
+        Comment comment = new Comment();
+        comment.setToUserId(1);
+        comment.setFromEmail("wrongUser@e.ru");
+        this.mockMvc.perform(post("/users/add-comment")
+                .cookie(allCookies)
+                .contentType(contentType)
+                .content(gson.toJson(comment))
+        )
+                .andDo(print())
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @Sql(value = {"/test-set-before.sql"}, executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
+    public void getCommentTestOk() throws Exception {
+        for (int i = 0; i < 2; ++i) {
+            Auth auth = new Auth();
+            auth.setEmail("userForComment" + String.valueOf(i) + "@e.ru");
+            auth.setUsername("userForComment" + String.valueOf(i));
+            auth.setPassword("123");
+            auth.setConfirmPassword("123");
+            Cookie[] allCookies = this.mockMvc.perform(post("/users/create")
+                    .contentType(contentType)
+                    .content(gson.toJson(auth))).andReturn().getResponse().getCookies();
+            Comment comment = new Comment();
+            comment.setToUserId(1);
+            comment.setFromUsername("userForComment" + String.valueOf(i));
+            comment.setFromEmail("userForComment" + String.valueOf(i) + "@e.ru");
+            comment.setRating(4 + i);
+            comment.setCommentVal("Not bad - " + String.valueOf(i));
+            this.mockMvc.perform(post("/users/add-comment")
+                    .cookie(allCookies)
+                    .contentType(contentType)
+                    .content(gson.toJson(comment))
+            );
+        }
+        this.mockMvc.perform(get("/users/get-comments/1")
+                .contentType(contentType)
+        )
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(content().string(LocalStorage.commentList));
     }
 }

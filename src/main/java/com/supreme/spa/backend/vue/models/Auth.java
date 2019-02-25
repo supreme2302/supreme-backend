@@ -25,7 +25,7 @@ public class Auth {
 
     @JsonCreator
     public Auth(@JsonProperty("id") int id,
-                @JsonProperty("username") String username,
+                @JsonProperty("fromUsername") String username,
                 @JsonProperty("email") String email,
                 @JsonProperty("password") String password,
                 @JsonProperty("confirmPassword") String confirmPassword) {

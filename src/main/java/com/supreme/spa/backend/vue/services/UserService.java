@@ -189,7 +189,7 @@ public class UserService {
         int offset = (page - 1) * limit;
         StringBuilder sqlBuilder = new StringBuilder();
         List<Object> list = new ArrayList<>();
-        sqlBuilder.append("select distinct auth.id, username, email, about from auth\n" +
+        sqlBuilder.append("select distinct auth.id, fromUsername, email, about from auth\n" +
                 "join profile p on auth.id = p.user_id\n" +
                 "join profile_skill skill on p.id = skill.profile_id\n" +
                 "join skill s on skill.skill_id = s.id ");
@@ -200,7 +200,7 @@ public class UserService {
             list.add(skills.get(i).toLowerCase());
         }
         sqlBuilder.append(" and p.onpage = true ");
-        sqlBuilder.append("order by username offset ? rows limit ?");
+        sqlBuilder.append("order by fromUsername offset ? rows limit ?");
         list.add(offset);
         list.add(limit);
         return jdbc.query(sqlBuilder.toString(), list.toArray(), totalUserDataMapper);
@@ -211,7 +211,7 @@ public class UserService {
         int offset = (page - 1) * limit;
         StringBuilder sqlBuilder = new StringBuilder();
         List<Object> list = new ArrayList<>();
-        sqlBuilder.append("select distinct auth.id, username, email, about from auth\n" +
+        sqlBuilder.append("select distinct auth.id, fromUsername, email, about from auth\n" +
                 "join profile p on auth.id = p.user_id\n" +
                 "join profile_genre pg on p.id = pg.profile_id\n" +
                 "join genre g on pg.genre_id = g.id");
@@ -222,7 +222,7 @@ public class UserService {
             list.add(genres.get(i).toLowerCase());
         }
         sqlBuilder.append(" and p.onpage = true ");
-        sqlBuilder.append("order by username offset ? rows limit ?");
+        sqlBuilder.append("order by fromUsername offset ? rows limit ?");
         list.add(offset);
         list.add(limit);
         return jdbc.query(sqlBuilder.toString(), list.toArray(), totalUserDataMapper);
@@ -233,7 +233,7 @@ public class UserService {
         int offset = (page - 1) * limit;
         StringBuilder sqlBuilder = new StringBuilder();
         List<Object> list = new ArrayList<>();
-        sqlBuilder.append("select distinct auth.id, username, email, about from auth\n" +
+        sqlBuilder.append("select distinct auth.id, fromUsername, email, about from auth\n" +
                 "join profile p on auth.id = p.user_id\n" +
                 "join profile_skill skill on p.id = skill.profile_id\n" +
                 "join skill s on skill.skill_id = s.id\n" +
@@ -251,7 +251,7 @@ public class UserService {
             list.add(genres.get(i).toLowerCase());
         }
         sqlBuilder.append(" and p.onpage = true ");
-        sqlBuilder.append("order by username offset ? rows limit ?");
+        sqlBuilder.append("order by fromUsername offset ? rows limit ?");
         list.add(offset);
         list.add(limit);
         return jdbc.query(sqlBuilder.toString(), list.toArray(), totalUserDataMapper);
@@ -275,7 +275,7 @@ public class UserService {
     /**
      * load.
      *
-     * @param user is username
+     * @param user is fromUsername
      * @return avatar
      */
 
@@ -320,19 +320,21 @@ public class UserService {
 
     @Transactional
     public void addComment(Comment comment) {
-        String sqlForInsertIntoComment = "INSERT INTO comment(user_id, username, comment_val, rating) VALUES (?, ?, ?, ?)";
+        String sqlForInsertIntoComment = "INSERT INTO "
+                + "comment(to_user_id, from_username, from_email, comment_val, rating) VALUES (?, ?, ?, ?, ?)";
         String sqlForInsertIntoCommentsCounter = "UPDATE comment_counter SET counter = counter + 1, "
                 + "sum_rating = sum_rating + ? WHERE user_id = ?";
         String sqlForUpdateProfile = "UPDATE profile SET rating = "
-                + "(SELECT sum_rating / counter  FROM comment_counter WHERE comment_counter.user_id = ?) WHERE user_id = ?";
-        jdbc.update(sqlForInsertIntoComment, comment.getUserId(), comment.getUsername(),
-                comment.getCommentVal(), comment.getRating());
-        jdbc.update(sqlForInsertIntoCommentsCounter, comment.getRating(), comment.getUserId());
-        jdbc.update(sqlForUpdateProfile, comment.getUserId(), comment.getUserId());
+                + "(SELECT sum_rating / counter  FROM comment_counter WHERE comment_counter.user_id = ?) "
+                + "WHERE user_id = ?";
+        jdbc.update(sqlForInsertIntoComment, comment.getToUserId(), comment.getFromUsername(),
+                comment.getFromEmail(), comment.getCommentVal(), comment.getRating());
+        jdbc.update(sqlForInsertIntoCommentsCounter, comment.getRating(), comment.getToUserId());
+        jdbc.update(sqlForUpdateProfile, comment.getToUserId(), comment.getToUserId());
     }
 
-    public List<Comment> getCommentsByUserId(String userId) {
-        String sql = "SELECT * from comment where user_id = ?";
+    public List<Comment> getCommentsByUserId(int userId) {
+        String sql = "SELECT * from comment where to_user_id = ?";
         return jdbc.query(sql, commentMapper, userId);
     }
 
@@ -356,7 +358,7 @@ public class UserService {
             Auth auth = new Auth();
             auth.setId(resultSet.getInt("id"));
             auth.setEmail(resultSet.getString("email"));
-            auth.setUsername(resultSet.getString("username"));
+            auth.setUsername(resultSet.getString("fromUsername"));
             return auth;
         }
     }
@@ -380,7 +382,7 @@ public class UserService {
             TotalUserData totalUserData = new TotalUserData();
             totalUserData.setId(resultSet.getInt("id"));
             totalUserData.setEmail(resultSet.getString("email"));
-            totalUserData.setUsername(resultSet.getString("username"));
+            totalUserData.setUsername(resultSet.getString("fromUsername"));
             totalUserData.setAbout(resultSet.getString("about"));
             return totalUserData;
         }
@@ -391,8 +393,9 @@ public class UserService {
         public Comment mapRow(ResultSet resultSet, int i) throws SQLException {
             Comment comment = new Comment();
             comment.setId(resultSet.getInt("id"));
-            comment.setUserId(resultSet.getInt("user_id"));
-            comment.setUsername(resultSet.getString("username"));
+            comment.setToUserId(resultSet.getInt("to_user_id"));
+            comment.setFromUsername(resultSet.getString("from_username"));
+            comment.setFromEmail(resultSet.getString("from_email"));
             comment.setCommentVal(resultSet.getString("comment_val"));
             comment.setRating(resultSet.getInt("rating"));
             return comment;

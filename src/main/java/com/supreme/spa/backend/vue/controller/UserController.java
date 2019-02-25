@@ -295,12 +295,15 @@ public class UserController {
         if (userSession == null) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(UserStatus.ACCESS_ERROR);
         }
+        if (!userSession.toString().equals(comment.getFromEmail())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(UserStatus.ACCESS_ERROR);
+        }
         userService.addComment(comment);
         return ResponseEntity.status(HttpStatus.CREATED).body(UserStatus.SUCCESSFULLY_CREATED);
     }
 
     @GetMapping(path = "/get-comments/{userId}")
-    public ResponseEntity getComments(@PathVariable(name = "userId") String userId) {
+    public ResponseEntity getComments(@PathVariable(name = "userId") int userId) {
         return ResponseEntity.ok(userService.getCommentsByUserId(userId));
     }
 }

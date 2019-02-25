@@ -52,8 +52,9 @@ CREATE TABLE IF NOT EXISTS "auth" (
 
 CREATE TABLE IF NOT EXISTS "comment" (
   id SERIAL NOT NULL PRIMARY KEY,
-  user_id INTEGER NOT NULL REFERENCES auth(id),
-  username CITEXT NOT NULL REFERENCES auth(username),
+  to_user_id INTEGER NOT NULL REFERENCES auth(id),
+  from_username CITEXT NOT NULL REFERENCES auth(username),
+  from_email CITEXT NOT NULL REFERENCES auth(email),
   comment_val CITEXT NOT NULL,
   rating INTEGER NOT NULL
 );
@@ -121,13 +122,16 @@ INSERT INTO genre (genre_name) VALUES ('jazz');
 INSERT INTO genre (genre_name) VALUES ('metal');
 
 INSERT INTO auth (email, username, password) VALUES ('exist@e.ru', 'exist', '$2a$10$Rneet0FPQZ7jZYit4soJz.n85xEh.0IFn7B24AIBK4OpGVi/oQaHq');
+INSERT INTO profile (user_id) VALUES (1);
+INSERT INTO comment_counter (user_id) VALUES (1);
 INSERT INTO auth (email, username, password) VALUES ('exist3@e.ru', 'userWithProfileAndSkillsAndGenres', '$2a$10$Rneet0FPQZ7jZYit4soJz.n85xEh.0IFn7B24AIBK4OpGVi/oQaHq');
 INSERT INTO profile (user_id) VALUES (2);
-UPDATE profile SET phone = '9153456789', about = 'bio', onpage = true, rating = 2;
-INSERT INTO profile_skill (profile_id, skill_id) VALUES (1, 1);
-INSERT INTO profile_skill (profile_id, skill_id) VALUES (1, 3);
-INSERT INTO profile_genre (profile_id, genre_id) VALUES (1, 2);
-INSERT INTO profile_genre (profile_id, genre_id) VALUES (1, 3);
+INSERT INTO comment_counter (user_id) VALUES (2);
+UPDATE profile SET phone = '9153456789', about = 'bio', onpage = true, rating = 0;
+INSERT INTO profile_skill (profile_id, skill_id) VALUES (2, 1);
+INSERT INTO profile_skill (profile_id, skill_id) VALUES (2, 3);
+INSERT INTO profile_genre (profile_id, genre_id) VALUES (2, 2);
+INSERT INTO profile_genre (profile_id, genre_id) VALUES (2, 3);
 
 
 

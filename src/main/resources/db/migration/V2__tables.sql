@@ -19,8 +19,9 @@ CREATE TABLE IF NOT EXISTS "auth" (
 
 CREATE TABLE IF NOT EXISTS "comment" (
   id SERIAL NOT NULL PRIMARY KEY,
-  user_id INTEGER NOT NULL REFERENCES auth(id),
-  username CITEXT NOT NULL REFERENCES auth(username),
+  to_user_id INTEGER NOT NULL REFERENCES auth(id),
+  from_username CITEXT NOT NULL REFERENCES auth(username),
+  from_email CITEXT NOT NULL REFERENCES auth(email),
   comment_val CITEXT NOT NULL,
   rating INTEGER NOT NULL
 );
@@ -186,3 +187,5 @@ insert into comment_counter(user_id) values (1);
 select * from comment_counter;
 update comment_counter set counter = counter + 1, sum_rating = sum_rating + 5;
 select (sum_rating / counter) from comment_counter;
+
+SELECT * from comment where to_user_id = '1';
