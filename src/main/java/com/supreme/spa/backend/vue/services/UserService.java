@@ -66,7 +66,8 @@ public class UserService {
     }
 
     public User getUser(String email) {
-        String sql = "select auth.id, auth.email, auth.username, profile.phone, profile.about, profile.onpage from auth\n" +
+        String sql = "select auth.id, auth.email, auth.username, profile.phone, profile.about, profile.onpage, " +
+                "profile.rating from auth\n" +
                 "join profile on auth.id = profile.user_id\n" +
                 "where email = ?";
         try {
@@ -77,7 +78,7 @@ public class UserService {
     }
 
     public User getUserById(int id) {
-        String sql = "select auth.id, auth.email, auth.username, profile.phone, profile.about, profile.onpage from auth\n" +
+        String sql = "select auth.id, auth.email, auth.username, profile.phone, profile.about, profile.onpage, profile.rating from auth\n" +
                 "join profile on auth.id = profile.user_id\n" +
                 "where auth.id = ?";
         try {
@@ -348,6 +349,7 @@ public class UserService {
             user.setPhone(resultSet.getString("phone"));
             user.setAbout(resultSet.getString("about"));
             user.setOnpage(resultSet.getBoolean("onpage"));
+            user.setRating(resultSet.getFloat("rating"));
             return user;
         }
     }

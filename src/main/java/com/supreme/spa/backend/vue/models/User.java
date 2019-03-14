@@ -16,6 +16,7 @@ public class User {
     private String[] skills;
     private String[] genres;
     private Boolean onpage;
+    private float rating;
 
 //    @JsonCreator
 //    public User(
