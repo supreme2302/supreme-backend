@@ -11,5 +11,4 @@ public class Profile {
     private String skills;
     private int userId;
     private float rating;
-    private int delete;
 }
