@@ -9,7 +9,8 @@ public class LocalStorage {
             + "\"about\":\"\","
             + "\"skills\":null,"
             + "\"genres\":null,"
-            + "\"onpage\":false"
+            + "\"onpage\":false,"
+            + "\"rating\":0.0"
             + "}";
     public static String fullProfile = "{"
             + "\"id\":2,"
@@ -23,7 +24,8 @@ public class LocalStorage {
             + "\"genres\":["
             + "\"rock\",\"jazz\""
             + "],"
-            + "\"onpage\":true"
+            + "\"onpage\":true,"
+            + "\"rating\":0.0"
             + "}";
     public static String changedProfile = "{"
             + "\"id\":2,"
@@ -37,7 +39,8 @@ public class LocalStorage {
             + "\"genres\":["
             + "\"pop\",\"metal\""
             + "],"
-            + "\"onpage\":false"
+            + "\"onpage\":false,"
+            + "\"rating\":0.0"
             + "}";
 
     public static String commentList = "" +
