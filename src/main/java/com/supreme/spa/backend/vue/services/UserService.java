@@ -42,9 +42,11 @@ public class UserService {
         String sql = "INSERT INTO auth (username, email, password) VALUES (?, ?, ?) RETURNING id";
         String sqlProfile = "INSERT INTO profile(user_id) VALUES (?)";
         String sqlCommentCounter = "INSERT INTO comment_counter(user_id) VALUES (?)";
+        String sqlPicture = "INSERT INTO picture(client_id) VALUES (?)";
         Integer id = jdbc.queryForObject(sql, Integer.class, auth.getUsername(), auth.getEmail(), auth.getPassword());
         jdbc.update(sqlProfile, id);
         jdbc.update(sqlCommentCounter, id);
+        jdbc.update(sqlPicture, id);
     }
 
     public String getAuthForCheck(String email) {
@@ -174,8 +176,9 @@ public class UserService {
     public List<TotalUserData> getListOfUsers(int page) {
         int limit = 6;
         int offset = (page - 1) * limit;
-        String sql = "SELECT auth.id, email, username, about FROM auth "
+        String sql = "SELECT auth.id, email, username, about, p2.link FROM auth "
                 + "JOIN profile p on auth.id = p.user_id "
+                + "JOIN picture p2 on auth.id = p2.client_id "
                 + "WHERE p.onpage = TRUE "
                 + "ORDER BY username OFFSET ? ROWS LIMIT ?";
         try {
@@ -267,10 +270,10 @@ public class UserService {
      * @throws IOException if there is error(Handled in controller)
      */
     public void store(MultipartFile file, String user) throws IOException {
-        File tosave = new File(PATH_AVATARS_FOLDER + user + "a.jpg");
+        File tosave = new File(PATH_AVATARS_FOLDER + user + "default.jpg");
         file.transferTo(tosave);
         String sql = "UPDATE profile SET avatar = ? FROM auth WHERE profile.user_id = auth.id AND auth.email = ?";
-        jdbc.update(sql, user + "a.jpg", user);
+        jdbc.update(sql, user + "default.jpg", user);
     }
 
     /**
@@ -386,6 +389,7 @@ public class UserService {
             totalUserData.setEmail(resultSet.getString("email"));
             totalUserData.setUsername(resultSet.getString("username"));
             totalUserData.setAbout(resultSet.getString("about"));
+            totalUserData.setImage(resultSet.getString("link"));
             return totalUserData;
         }
     }

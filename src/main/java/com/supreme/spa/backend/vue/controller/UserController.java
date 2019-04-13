@@ -2,11 +2,13 @@ package com.supreme.spa.backend.vue.controller;
 
 
 import com.supreme.spa.backend.vue.models.*;
+import com.supreme.spa.backend.vue.services.MediaService;
 import com.supreme.spa.backend.vue.services.UserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DuplicateKeyException;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.session.jdbc.config.annotation.web.http.EnableJdbcHttpSession;
@@ -25,31 +27,18 @@ import java.util.Map;
 @RestController
 @RequestMapping("/users")
 @EnableJdbcHttpSession
-@CrossOrigin(origins = {"http://localhost:8080", "https://supreme-spa.firebaseapp.com"}, allowCredentials = "true")
+//@CrossOrigin(origins = {"http://localhost:8080", "https://supreme-spa.firebaseapp.com"}, allowCredentials = "true")
 public class UserController {
+
     private final UserService userService;
+    private final MediaService mediaService;
     private final Logger LOGGER = LoggerFactory.getLogger(UserController.class);
 
-
     @Autowired
-    UserController(UserService userService) {
+    UserController(UserService userService,
+                   MediaService mediaService) {
         this.userService = userService;
-    }
-
-    private enum UserStatus {
-        SUCCESSFULLY_REGISTERED,
-        SUCCESSFULLY_AUTHED,
-        SUCCESSFULLY_LOGGED_OUT,
-        SUCCESSFULLY_CHANGED,
-        SUCCESSFULLY_CREATED,
-        ACCESS_ERROR,
-        WRONG_CREDENTIALS,
-        NOT_UNIQUE_USERNAME_OR_EMAIL,
-        NOT_UNIQUE_PHONE,
-        ALREADY_AUTHENTICATED,
-        UNEXPECTED_ERROR,
-        NOT_FOUND,
-        MAGIC
+        this.mediaService = mediaService;
     }
 
     @PostMapping(path = "/create")
@@ -143,6 +132,11 @@ public class UserController {
             String[] arrayGenres = genres.toArray(new String[genres.size()]);
             user.setGenres(arrayGenres);
         }
+        try {
+            String link = mediaService.getLink(user.getId());
+            user.setImage(link);
+        } catch (EmptyResultDataAccessException ignored) {}
+
         return ResponseEntity.ok(user);
     }
 
@@ -219,6 +213,10 @@ public class UserController {
             String[] arrayGenres = genres.toArray(new String[genres.size()]);
             existsUser.setGenres(arrayGenres);
         }
+        try {
+            String link = mediaService.getLink(existsUser.getId());
+            existsUser.setImage(link);
+        } catch (EmptyResultDataAccessException ignored) {}
         return ResponseEntity.ok(existsUser);
     }
 

@@ -9,6 +9,7 @@ drop table if exists "skill" cascade ;
 drop table if exists "message" cascade ;
 drop table if exists "genre" cascade ;
 drop table if exists "profile_genre" cascade ;
+drop table if exists "picture" cascade ;
 
 CREATE TABLE IF NOT EXISTS "auth" (
   id SERIAL NOT NULL PRIMARY KEY ,
@@ -76,6 +77,12 @@ CREATE TABLE IF NOT EXISTS "message" (
   recipient citext REFERENCES auth(email),
   sender citext REFERENCES auth(email),
   message_date TIMESTAMP WITH TIME ZONE
+);
+
+CREATE TABLE IF NOT EXISTS "picture" (
+  id SERIAL NOT NULL PRIMARY KEY ,
+  link CITEXT DEFAULT 'default.jpg',
+  client_id INTEGER REFERENCES auth(id)
 );
 
 INSERT INTO skill (skill_name) VALUES ('drums');

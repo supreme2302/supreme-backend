@@ -17,6 +17,7 @@ public class User {
     private String[] genres;
     private Boolean onpage;
     private float rating;
+    private String image;
 
 //    @JsonCreator
 //    public User(

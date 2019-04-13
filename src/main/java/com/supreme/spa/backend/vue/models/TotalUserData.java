@@ -8,5 +8,6 @@ public class TotalUserData {
     private String email;
     private String username;
     private String about;
+    private String image;
 
 }
