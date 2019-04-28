@@ -69,8 +69,9 @@ public class UserService {
 
     public User getUser(String email) {
         String sql = "select auth.id, auth.email, auth.username, profile.phone, profile.about, profile.onpage, " +
-                "profile.rating from auth\n" +
-                "join profile on auth.id = profile.user_id\n" +
+                "profile.rating, p.link from auth\n " +
+                "join profile on auth.id = profile.user_id\n " +
+                "join picture p on auth.id = p.client_id " +
                 "where email = ?";
         try {
             return jdbc.queryForObject(sql, userMapper, email);
@@ -80,8 +81,10 @@ public class UserService {
     }
 
     public User getUserById(int id) {
-        String sql = "select auth.id, auth.email, auth.username, profile.phone, profile.about, profile.onpage, profile.rating from auth\n" +
-                "join profile on auth.id = profile.user_id\n" +
+        String sql = "select auth.id, auth.email, auth.username, profile.phone, " +
+                "profile.about, profile.onpage, profile.rating, p.link from auth\n " +
+                "join profile on auth.id = profile.user_id\n " +
+                "join picture p on auth.id = p.client_id " +
                 "where auth.id = ?";
         try {
             return jdbc.queryForObject(sql, userMapper, id);
@@ -89,6 +92,17 @@ public class UserService {
             return null;
         }
     }
+
+//    public User getUserByEmail(String email) {
+//        String sql = "select auth.id, auth.email, auth.username, profile.phone, profile.about, profile.onpage, profile.rating from auth\n" +
+//                "join profile on auth.id = profile.user_id\n" +
+//                "where auth.email = ?";
+//        try {
+//            return jdbc.queryForObject(sql, userMapper, email);
+//        } catch (EmptyResultDataAccessException error) {
+//            return null;
+//        }
+//    }
 
     @Transactional
     public int updateUserData(User user) {
@@ -193,10 +207,11 @@ public class UserService {
         int offset = (page - 1) * limit;
         StringBuilder sqlBuilder = new StringBuilder();
         List<Object> list = new ArrayList<>();
-        sqlBuilder.append("select distinct auth.id, username, email, about from auth\n" +
+        sqlBuilder.append("select distinct auth.id, username, email, about, pi.link from auth\n" +
                 "join profile p on auth.id = p.user_id\n" +
                 "join profile_skill skill on p.id = skill.profile_id\n" +
-                "join skill s on skill.skill_id = s.id ");
+                "join skill s on skill.skill_id = s.id " +
+                "join picture pi on pi.client_id = auth.id ");
 
         sqlBuilder.append(" where ");
         for (int i = 0; i < skills.size(); ++i) {
@@ -215,10 +230,11 @@ public class UserService {
         int offset = (page - 1) * limit;
         StringBuilder sqlBuilder = new StringBuilder();
         List<Object> list = new ArrayList<>();
-        sqlBuilder.append("select distinct auth.id, username, email, about from auth\n" +
+        sqlBuilder.append("select distinct auth.id, username, email, about, pi.link from auth\n" +
                 "join profile p on auth.id = p.user_id\n" +
                 "join profile_genre pg on p.id = pg.profile_id\n" +
-                "join genre g on pg.genre_id = g.id");
+                "join genre g on pg.genre_id = g.id " +
+                "join picture pi on pi.client_id = auth.id ");
 
         sqlBuilder.append(" where ");
         for (int i = 0; i < genres.size(); ++i) {
@@ -237,12 +253,13 @@ public class UserService {
         int offset = (page - 1) * limit;
         StringBuilder sqlBuilder = new StringBuilder();
         List<Object> list = new ArrayList<>();
-        sqlBuilder.append("select distinct auth.id, username, email, about from auth\n" +
+        sqlBuilder.append("select distinct auth.id, username, email, about, pi.link from auth\n" +
                 "join profile p on auth.id = p.user_id\n" +
                 "join profile_skill skill on p.id = skill.profile_id\n" +
                 "join skill s on skill.skill_id = s.id\n" +
                 "join profile_genre pg on p.id = pg.profile_id\n" +
-                "join genre g on pg.genre_id = g.id");
+                "join genre g on pg.genre_id = g.id " +
+                "join picture pi on pi.client_id = auth.id ");
 
         sqlBuilder.append(" where ");
         for (int i = 0; i < skills.size(); ++i) {
@@ -294,13 +311,13 @@ public class UserService {
 
     public void addMessage(ChatMessage message) {
         String sql = "INSERT INTO message(content, recipient, sender, message_date) VALUES (?, ?, ?, ?)";
-        jdbc.update(sql, message.getContent(), message.getRecipient(), message.getSender(), message.getDate());
+        jdbc.update(sql, message.getContent(), message.getRecipientId(), message.getSenderId(), message.getDate());
     }
 
-    public List<ChatMessage> getMessagesByEmails(String sender, String recipient) {
+    public List<ChatMessage> getMessagesByEmails(int senderId, int recipientId) {
         String sql = "SELECT * FROM message WHERE (sender = ? AND recipient = ?) "
                 + "OR (recipient = ? and sender = ?) ORDER BY message_date";
-        return jdbc.query(sql, messageMapper, sender, recipient, sender, recipient);
+        return jdbc.query(sql, messageMapper, senderId, recipientId, senderId, recipientId);
     }
 
     public List<String> getAllSkills() {
@@ -342,6 +359,8 @@ public class UserService {
         return jdbc.query(sql, commentMapper, userId);
     }
 
+
+
     private static final class UserMapper implements RowMapper<User> {
         @Override
         public User mapRow(ResultSet resultSet, int i) throws SQLException {
@@ -353,6 +372,7 @@ public class UserService {
             user.setAbout(resultSet.getString("about"));
             user.setOnpage(resultSet.getBoolean("onpage"));
             user.setRating(resultSet.getFloat("rating"));
+            user.setImage(resultSet.getString("link"));
             return user;
         }
     }
@@ -373,8 +393,8 @@ public class UserService {
         public ChatMessage mapRow(ResultSet resultSet, int i) throws SQLException {
             ChatMessage message = new ChatMessage();
             message.setId(resultSet.getInt("id"));
-            message.setRecipient(resultSet.getString("recipient"));
-            message.setSender(resultSet.getString("sender"));
+            message.setRecipientId(resultSet.getInt("recipient"));
+            message.setSenderId(resultSet.getInt("sender"));
             message.setContent(resultSet.getString("content"));
             message.setDate(resultSet.getTimestamp("message_date"));
             return message;
@@ -408,4 +428,3 @@ public class UserService {
         }
     }
 }
-

@@ -2,6 +2,8 @@ package com.supreme.spa.backend.vue.websocket;
 
 import com.google.gson.Gson;
 import com.supreme.spa.backend.vue.models.ChatMessage;
+import com.supreme.spa.backend.vue.models.User;
+import com.supreme.spa.backend.vue.services.MediaService;
 import com.supreme.spa.backend.vue.services.UserService;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -17,6 +19,7 @@ import javax.websocket.server.PathParam;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static org.springframework.web.socket.CloseStatus.SERVER_ERROR;
 
@@ -25,31 +28,38 @@ public class WebSocketHandler extends TextWebSocketHandler {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(WebSocketHandler.class);
     private static final CloseStatus ACCESS_DENIED = new CloseStatus(4500, "Not logged in. Access denied");
-    private final @NotNull
-    UserService userService;
-    private final @NotNull
-    RemotePointService remotePointService;
-    private final @NotNull
-    Gson gson = new Gson();
+    private final UserService userService;
+    private final RemotePointService remotePointService;
+    private final Gson gson;
+    private final MediaService mediaService;
 
-    public WebSocketHandler(@NotNull UserService userService, @NotNull RemotePointService remotePointService) {
+    public WebSocketHandler(UserService userService,
+                            RemotePointService remotePointService,
+                            Gson gson,
+                            MediaService mediaService) {
         this.userService = userService;
         this.remotePointService = remotePointService;
+        this.gson = gson;
+        this.mediaService = mediaService;
     }
 
     @Override
     public void afterConnectionEstablished(WebSocketSession webSocketSession) {
-        final String user = (String) webSocketSession.getAttributes().get("user");
-        if ((user == null) || (userService.getUser(user) == null)) {
+        LOGGER.info("afterConnectionEstablished");
+        final String email = (String) webSocketSession.getAttributes().get("user");
+        User user = userService.getUser(email);
+        if ((email == null) || (userService.getUser(email) == null)) {
             LOGGER.warn("User requested websocket is not registred or not logged in. "
                     + "Openning websocket session is denied.");
             closeSessionSilently(webSocketSession, ACCESS_DENIED);
             return;
         }
-        remotePointService.registerUser(user, webSocketSession);
+        remotePointService.registerUser(email, webSocketSession);
         try {
             String[] params = webSocketSession.getUri().toString().split("/");
-            List<ChatMessage> messages = userService.getMessagesByEmails(user, params[2]);
+            List<ChatMessage> messages = userService.getMessagesByEmails(user.getId(), Integer.parseInt(params[2]));
+            String recipientImage = mediaService.getLink(Integer.parseInt(params[2]));
+            messages.forEach(m -> m.setRecipientImage(recipientImage));
             webSocketSession.sendMessage(new TextMessage(gson.toJson(messages)));
         } catch (IOException ignored) {
         }
@@ -58,23 +68,26 @@ public class WebSocketHandler extends TextWebSocketHandler {
 
     @Override
     protected void handleTextMessage(WebSocketSession webSocketSession, TextMessage message) {
+        LOGGER.info("handleTextMessage");
         if (!webSocketSession.isOpen()) {
             return;
         }
-        final String user = (String) webSocketSession.getAttributes().get("user");
-        if (user == null || userService.getUser(user) == null) {
+        final String email = (String) webSocketSession.getAttributes().get("user");
+        User sender = userService.getUser(email);
+        if (email == null || userService.getUser(email) == null) {
             closeSessionSilently(webSocketSession, ACCESS_DENIED);
             return;
         }
-        handleMessage(user, message);
+        handleMessage(sender.getId(), message);
     }
 
-    private void handleMessage(String user, TextMessage text) {
+    private void handleMessage(int senderId, TextMessage text) {
+        LOGGER.info("handleMessage");
         final ChatMessage message;
         message = gson.fromJson(text.getPayload(), ChatMessage.class);
-        message.setSender(user);
+        message.setSenderId(senderId);
         try {
-            remotePointService.sendMessageToUser(message.getRecipient(), message);
+            remotePointService.sendMessageToUser(message.getRecipientId(), message);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -87,6 +100,7 @@ public class WebSocketHandler extends TextWebSocketHandler {
 
     @Override
     public void afterConnectionClosed(WebSocketSession webSocketSession, CloseStatus closeStatus) {
+        LOGGER.info("afterConnectionClosed");
         final String user = (String) webSocketSession.getAttributes().get("user");
         //TODO:  Переподключение
         if (user == null) {
@@ -97,6 +111,7 @@ public class WebSocketHandler extends TextWebSocketHandler {
     }
 
     private void closeSessionSilently(@NotNull WebSocketSession session, @Nullable CloseStatus closeStatus) {
+        LOGGER.info("closeSessionSilently");
         final CloseStatus status = closeStatus == null ? SERVER_ERROR : closeStatus;
         //noinspection OverlyBroadCatchBlock
         try {

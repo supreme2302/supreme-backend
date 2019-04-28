@@ -2,6 +2,7 @@ package com.supreme.spa.backend.vue.websocket;
 
 import com.google.gson.Gson;
 import com.supreme.spa.backend.vue.models.ChatMessage;
+import com.supreme.spa.backend.vue.models.User;
 import com.supreme.spa.backend.vue.services.UserService;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,13 +19,15 @@ import java.util.concurrent.ConcurrentHashMap;
 @Service
 public class RemotePointService {
     private final Map<String, WebSocketSession> sessions = new ConcurrentHashMap<>();
-    private final Gson gson = new Gson();
+    private final Gson gson;
 
     private final UserService userService;
 
     @Autowired
-    public RemotePointService(UserService userService) {
+    public RemotePointService(UserService userService,
+                              Gson gson) {
         this.userService = userService;
+        this.gson = gson;
     }
 
     public void registerUser(@NotNull String user, @NotNull WebSocketSession webSocketSession) {
@@ -60,10 +63,12 @@ public class RemotePointService {
         }
     }
 
-    public void sendMessageToUser(@NotNull String user, @NotNull ChatMessage message) throws IOException {
-        final WebSocketSession webSocketSession = sessions.get(user);
+    public void sendMessageToUser(int recipientId, @NotNull ChatMessage message) throws IOException {
+        User user = userService.getUserById(recipientId);
+        final WebSocketSession webSocketSession = sessions.get(user.getEmail());
         Timestamp timestamp = new Timestamp(System.currentTimeMillis());
         message.setDate(timestamp);
+        message.setRecipientImage(user.getImage());
         userService.addMessage(message);
         if (webSocketSession == null) {
             throw new IOException("no session for user " + user);

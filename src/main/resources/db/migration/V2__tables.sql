@@ -71,11 +71,12 @@ CREATE TABLE IF NOT EXISTS "profile_genre" (
   FOREIGN KEY (genre_id) REFERENCES genre(id)
 );
 
+
 CREATE TABLE IF NOT EXISTS "message" (
   id SERIAL NOT NULL PRIMARY KEY ,
   content CITEXT NOT NULL,
-  recipient citext REFERENCES auth(email),
-  sender citext REFERENCES auth(email),
+  recipient INTEGER REFERENCES auth(id),
+  sender INTEGER REFERENCES auth(id),
   message_date TIMESTAMP WITH TIME ZONE
 );
 

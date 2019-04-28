@@ -160,19 +160,6 @@ public class UserController {
         return ResponseEntity.ok(new Message(UserStatus.SUCCESSFULLY_CHANGED));
     }
 
-//    @GetMapping(path = "/list/{page}")
-//    public ResponseEntity listOfUsers(@PathVariable("page") int page) {
-//        List<Auth> users = userService.getListOfUsers(page);
-//        if (users == null || users.size() == 0) {
-//            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new Message(UserStatus.NOT_FOUND));
-//        }
-//        Map<String, Object> hashResp = new HashMap<>();
-//        hashResp.put("page", page + 1);
-//        hashResp.put("users", users);
-//        return ResponseEntity.status(HttpStatus.OK)
-//                .body(hashResp);
-//    }
-
     @GetMapping(path = "/list/{page}")
     public ResponseEntity listOfUsersWithParams(@PathVariable("page") int page,
                                                 @RequestParam(value = "skill", required = false) ArrayList<String> skills,
@@ -305,6 +292,5 @@ public class UserController {
         return ResponseEntity.ok(userService.getCommentsByUserId(userId));
     }
 }
-
 // todo на бэке добавить отзывы с рейтингом
 // todo open card backend onpage
