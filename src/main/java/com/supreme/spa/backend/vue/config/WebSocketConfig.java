@@ -1,11 +1,13 @@
 package com.supreme.spa.backend.vue.config;
 
+import com.supreme.spa.backend.vue.websocket.ChatWebSocketHandler;
+import com.supreme.spa.backend.vue.websocket.CommonWebSocketHandler;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.concurrent.ConcurrentTaskScheduler;
-import org.springframework.web.socket.WebSocketHandler;
+//import org.springframework.web.socket.WebSocketHandler;
 import org.springframework.web.socket.config.annotation.EnableWebSocket;
 import org.springframework.web.socket.config.annotation.WebSocketConfigurer;
 import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry;
@@ -18,15 +20,23 @@ import java.util.concurrent.Executors;
 public class WebSocketConfig implements WebSocketConfigurer {
 
     @NotNull
-    private final WebSocketHandler webSocketHandler;
+    private final ChatWebSocketHandler chatWebSocketHandler;
 
-    public WebSocketConfig(@NotNull WebSocketHandler webSocketHandler) {
-        this.webSocketHandler = webSocketHandler;
+    private final CommonWebSocketHandler commonWebSocketHandler;
+
+    public WebSocketConfig(@NotNull ChatWebSocketHandler chatWebSocketHandler,
+                           CommonWebSocketHandler commonWebSocketHandler) {
+        this.chatWebSocketHandler = chatWebSocketHandler;
+        this.commonWebSocketHandler = commonWebSocketHandler;
     }
 
     @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry webSocketHandlerRegistry) {
-        webSocketHandlerRegistry.addHandler(webSocketHandler, "/chat/{email}")
+        webSocketHandlerRegistry.addHandler(chatWebSocketHandler, "/chat/{email}")
+                .addInterceptors(new HttpSessionHandshakeInterceptor())
+                .setAllowedOrigins("*");
+
+        webSocketHandlerRegistry.addHandler(commonWebSocketHandler, "/*")
                 .addInterceptors(new HttpSessionHandshakeInterceptor())
                 .setAllowedOrigins("*");
 

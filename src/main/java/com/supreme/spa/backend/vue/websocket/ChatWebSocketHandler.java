@@ -15,28 +15,25 @@ import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
-import javax.websocket.server.PathParam;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static org.springframework.web.socket.CloseStatus.SERVER_ERROR;
 
 @Component
-public class WebSocketHandler extends TextWebSocketHandler {
+public class ChatWebSocketHandler extends TextWebSocketHandler {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(WebSocketHandler.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ChatWebSocketHandler.class);
     private static final CloseStatus ACCESS_DENIED = new CloseStatus(4500, "Not logged in. Access denied");
     private final UserService userService;
     private final RemotePointService remotePointService;
     private final Gson gson;
     private final MediaService mediaService;
 
-    public WebSocketHandler(UserService userService,
-                            RemotePointService remotePointService,
-                            Gson gson,
-                            MediaService mediaService) {
+    public ChatWebSocketHandler(UserService userService,
+                                RemotePointService remotePointService,
+                                Gson gson,
+                                MediaService mediaService) {
         this.userService = userService;
         this.remotePointService = remotePointService;
         this.gson = gson;
