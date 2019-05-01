@@ -9,5 +9,6 @@ public class Comment {
     private String fromUsername;
     private String fromEmail;
     private String commentVal;
+    private String fromImage;
     private int rating;
 }

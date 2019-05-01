@@ -355,11 +355,12 @@ public class UserService {
     }
 
     public List<Comment> getCommentsByUserId(int userId) {
-        String sql = "SELECT * from comment where to_user_id = ?";
+        String sql = "SELECT c.id, c.to_user_id, c.from_email, c.from_username, " +
+                "c.comment_val, c.rating, p.link from comment c " +
+                "JOIN auth a ON c.from_email = a.email " +
+                "JOIN picture p on a.id = p.client_id where to_user_id = ? ";
         return jdbc.query(sql, commentMapper, userId);
     }
-
-
 
     private static final class UserMapper implements RowMapper<User> {
         @Override
@@ -424,6 +425,7 @@ public class UserService {
             comment.setFromEmail(resultSet.getString("from_email"));
             comment.setCommentVal(resultSet.getString("comment_val"));
             comment.setRating(resultSet.getInt("rating"));
+            comment.setFromImage(resultSet.getString("link"));
             return comment;
         }
     }

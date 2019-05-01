@@ -289,8 +289,8 @@ public class UserController {
 
     @GetMapping(path = "/get-comments/{userId}")
     public ResponseEntity getComments(@PathVariable(name = "userId") int userId) {
-        return ResponseEntity.ok(userService.getCommentsByUserId(userId));
+        List<Comment> commentList = userService.getCommentsByUserId(userId);
+        return ResponseEntity.ok(commentList);
     }
 }
-// todo на бэке добавить отзывы с рейтингом
 // todo open card backend onpage
