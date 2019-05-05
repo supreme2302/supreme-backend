@@ -31,10 +31,13 @@ public class UserService {
     private static final MessageMapper messageMapper = new MessageMapper();
     private static final TotalUserDataMapper totalUserDataMapper = new TotalUserDataMapper();
     private static final CommentMapper commentMapper = new CommentMapper();
+    private final MediaService mediaService;
 
     @Autowired
-    public UserService(JdbcTemplate jdbc) {
+    public UserService(JdbcTemplate jdbc,
+                       MediaService mediaService) {
         this.jdbc = jdbc;
+        this.mediaService = mediaService;
     }
 
     @Transactional
@@ -314,10 +317,17 @@ public class UserService {
         jdbc.update(sql, message.getContent(), message.getRecipientId(), message.getSenderId(), message.getDate());
     }
 
-    public List<ChatMessage> getMessagesByEmails(int senderId, int recipientId) {
+    public List<ChatMessage> getMessagesByIds(int senderId, int recipientId) {
         String sql = "SELECT * FROM message WHERE (sender = ? AND recipient = ?) "
                 + "OR (recipient = ? and sender = ?) ORDER BY message_date";
         return jdbc.query(sql, messageMapper, senderId, recipientId, senderId, recipientId);
+    }
+
+    public List<ChatMessage> getMessagesById(int id) {
+        List<ChatMessage> messages = jdbc.query("SELECT * FROM message WHERE recipient = ? ORDER BY message_date DESC ",
+                messageMapper, id);
+        messages.forEach(m -> m.setRecipientImage(mediaService.getLink(m.getSenderId())));
+        return messages;
     }
 
     public List<String> getAllSkills() {

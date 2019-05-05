@@ -32,13 +32,13 @@ public class WebSocketConfig implements WebSocketConfigurer {
 
     @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry webSocketHandlerRegistry) {
-        webSocketHandlerRegistry.addHandler(chatWebSocketHandler, "/chat/{email}")
+        webSocketHandlerRegistry.addHandler(chatWebSocketHandler, "/chat")
                 .addInterceptors(new HttpSessionHandshakeInterceptor())
                 .setAllowedOrigins("*");
 
-        webSocketHandlerRegistry.addHandler(commonWebSocketHandler, "/*")
-                .addInterceptors(new HttpSessionHandshakeInterceptor())
-                .setAllowedOrigins("*");
+//        webSocketHandlerRegistry.addHandler(commonWebSocketHandler, "/*")
+//                .addInterceptors(new HttpSessionHandshakeInterceptor())
+//                .setAllowedOrigins("*");
 
     }
 

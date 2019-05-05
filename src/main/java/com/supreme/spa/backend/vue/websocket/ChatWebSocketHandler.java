@@ -1,10 +1,18 @@
 package com.supreme.spa.backend.vue.websocket;
 
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 import com.supreme.spa.backend.vue.models.ChatMessage;
 import com.supreme.spa.backend.vue.models.User;
 import com.supreme.spa.backend.vue.services.MediaService;
 import com.supreme.spa.backend.vue.services.UserService;
+import com.supreme.spa.backend.vue.websocket.event.GetMessages;
+import com.supreme.spa.backend.vue.websocket.event.GetMessagesRouteUpdate;
+import com.supreme.spa.backend.vue.websocket.event.Message;
+import com.supreme.spa.backend.vue.websocket.exception.SupremeWebSocketException;
+import lombok.SneakyThrows;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -16,6 +24,8 @@ import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
 import java.io.IOException;
+import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.springframework.web.socket.CloseStatus.SERVER_ERROR;
@@ -29,15 +39,18 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
     private final RemotePointService remotePointService;
     private final Gson gson;
     private final MediaService mediaService;
+    private final ObjectMapper objectMapper;
 
     public ChatWebSocketHandler(UserService userService,
                                 RemotePointService remotePointService,
                                 Gson gson,
-                                MediaService mediaService) {
+                                MediaService mediaService,
+                                ObjectMapper objectMapper) {
         this.userService = userService;
         this.remotePointService = remotePointService;
         this.gson = gson;
         this.mediaService = mediaService;
+        this.objectMapper = objectMapper;
     }
 
     @Override
@@ -52,20 +65,10 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
             return;
         }
         remotePointService.registerUser(email, webSocketSession);
-        try {
-            String[] params = webSocketSession.getUri().toString().split("/");
-            List<ChatMessage> messages = userService.getMessagesByEmails(user.getId(), Integer.parseInt(params[2]));
-            String recipientImage = mediaService.getLink(Integer.parseInt(params[2]));
-            messages.forEach(m -> m.setRecipientImage(recipientImage));
-            webSocketSession.sendMessage(new TextMessage(gson.toJson(messages)));
-        } catch (IOException ignored) {
-        }
-
     }
 
     @Override
     protected void handleTextMessage(WebSocketSession webSocketSession, TextMessage message) {
-        LOGGER.info("handleTextMessage");
         if (!webSocketSession.isOpen()) {
             return;
         }
@@ -78,15 +81,46 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
         handleMessage(sender.getId(), message);
     }
 
+    @SuppressWarnings("Duplicates")
+    @SneakyThrows({JsonParseException.class, JsonMappingException.class, IOException.class})
     private void handleMessage(int senderId, TextMessage text) {
-        LOGGER.info("handleMessage");
-        final ChatMessage message;
-        message = gson.fromJson(text.getPayload(), ChatMessage.class);
-        message.setSenderId(senderId);
-        try {
-            remotePointService.sendMessageToUser(message.getRecipientId(), message);
-        } catch (IOException e) {
-            e.printStackTrace();
+        final Message message = objectMapper.readValue(text.getPayload(), Message.class);
+        if (message.getClass() == ChatMessage.class) {
+            ChatMessage chatMessage = (ChatMessage) message;
+            User user = userService.getUserById(chatMessage.getRecipientId());
+            chatMessage.setSenderId(senderId);
+            Timestamp timestamp = new Timestamp(System.currentTimeMillis());
+            chatMessage.setDate(timestamp);
+            chatMessage.setRecipientImage(user.getImage());
+            userService.addMessage(chatMessage);
+            try {
+                remotePointService.sendMessageToUser(user.getEmail(), chatMessage);
+            } catch (SupremeWebSocketException e) {
+                LOGGER.error(e.getMessage());
+            }
+
+        } else if (message.getClass() == GetMessages.class) {
+            GetMessages getMessages = (GetMessages) message;
+            List<ChatMessage> messages = userService.getMessagesByIds(
+                    getMessages.getSenderId(), getMessages.getRecipientId());
+            String recipientImage = mediaService.getLink(getMessages.getRecipientId());
+            messages.forEach(m -> m.setRecipientImage(recipientImage));
+            try {
+                remotePointService.sendMessagesToUser(getMessages.getSenderId(), messages, getMessages.getClass());
+            } catch (SupremeWebSocketException e) {
+                LOGGER.error(e.getMessage());
+            }
+        } else if (message.getClass() == GetMessagesRouteUpdate.class) {
+            GetMessagesRouteUpdate getMessages = (GetMessagesRouteUpdate) message;
+            List<ChatMessage> messages = userService.getMessagesByIds(
+                    getMessages.getSenderId(), getMessages.getRecipientId());
+            String recipientImage = mediaService.getLink(getMessages.getRecipientId());
+            messages.forEach(m -> m.setRecipientImage(recipientImage));
+            try {
+                remotePointService.sendMessagesToUser(getMessages.getSenderId(), messages, getMessages.getClass());
+            } catch (SupremeWebSocketException e) {
+                LOGGER.error(e.getMessage());
+            }
         }
     }
 
@@ -110,7 +144,6 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
     private void closeSessionSilently(@NotNull WebSocketSession session, @Nullable CloseStatus closeStatus) {
         LOGGER.info("closeSessionSilently");
         final CloseStatus status = closeStatus == null ? SERVER_ERROR : closeStatus;
-        //noinspection OverlyBroadCatchBlock
         try {
             session.close(status);
         } catch (Exception ignore) {

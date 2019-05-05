@@ -292,5 +292,9 @@ public class UserController {
         List<Comment> commentList = userService.getCommentsByUserId(userId);
         return ResponseEntity.ok(commentList);
     }
+
+    @GetMapping(path = "/messages/{userId}")
+    public List<ChatMessage> getMessages(@PathVariable(name = "userId") int userId) {
+        return userService.getMessagesById(userId);
+    }
 }
-// todo open card backend onpage
