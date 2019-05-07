@@ -324,8 +324,21 @@ public class UserService {
     }
 
     public List<ChatMessage> getMessagesById(int id) {
-        List<ChatMessage> messages = jdbc.query("SELECT * FROM message WHERE recipient = ? ORDER BY message_date DESC ",
-                messageMapper, id);
+        List<ChatMessage> messages =
+                jdbc.query("SELECT m.id, m.content, m.recipient, m.sender, m.message_date, a.email, a.username FROM message m " +
+                        "JOIN auth a on m.sender = a.id " +
+                        "WHERE m.recipient = ? ORDER BY m.message_date DESC ",
+                        ((resultSet, i) -> {
+                            ChatMessageWithSenderAndRecipient message = new ChatMessageWithSenderAndRecipient();
+                            message.setId(resultSet.getInt("id"));
+                            message.setRecipientId(resultSet.getInt("recipient"));
+                            message.setSenderId(resultSet.getInt("sender"));
+                            message.setContent(resultSet.getString("content"));
+                            message.setDate(resultSet.getTimestamp("message_date"));
+                            message.setSenderEmail(resultSet.getString("email"));
+                            message.setSenderUsername(resultSet.getString("username"));
+                            return message;
+                        }), id);
         messages.forEach(m -> m.setRecipientImage(mediaService.getLink(m.getSenderId())));
         return messages;
     }
