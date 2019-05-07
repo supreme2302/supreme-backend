@@ -27,7 +27,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/users")
 @EnableJdbcHttpSession
-//@CrossOrigin(origins = {"http://localhost:8080", "https://supreme-spa.firebaseapp.com"}, allowCredentials = "true")
+@CrossOrigin(origins = {"http://localhost:8080", "https://supreme-spa.firebaseapp.com"}, allowCredentials = "true")
 public class UserController {
 
     private final UserService userService;

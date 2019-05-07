@@ -25,7 +25,6 @@ import org.springframework.web.socket.handler.TextWebSocketHandler;
 
 import java.io.IOException;
 import java.sql.Timestamp;
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.springframework.web.socket.CloseStatus.SERVER_ERROR;
@@ -57,7 +56,6 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
     public void afterConnectionEstablished(WebSocketSession webSocketSession) {
         LOGGER.info("afterConnectionEstablished");
         final String email = (String) webSocketSession.getAttributes().get("user");
-        User user = userService.getUser(email);
         if ((email == null) || (userService.getUser(email) == null)) {
             LOGGER.warn("User requested websocket is not registred or not logged in. "
                     + "Openning websocket session is denied.");

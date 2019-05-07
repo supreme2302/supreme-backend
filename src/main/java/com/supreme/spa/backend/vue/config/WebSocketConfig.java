@@ -34,7 +34,7 @@ public class WebSocketConfig implements WebSocketConfigurer {
     public void registerWebSocketHandlers(WebSocketHandlerRegistry webSocketHandlerRegistry) {
         webSocketHandlerRegistry.addHandler(chatWebSocketHandler, "/chat")
                 .addInterceptors(new HttpSessionHandshakeInterceptor())
-                .setAllowedOrigins("*");
+                .setAllowedOrigins("https://supreme-spa.firebaseapp.com", "http://localhost:8080");
 
 //        webSocketHandlerRegistry.addHandler(commonWebSocketHandler, "/*")
 //                .addInterceptors(new HttpSessionHandshakeInterceptor())

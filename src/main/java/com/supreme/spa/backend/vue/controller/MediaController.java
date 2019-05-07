@@ -23,6 +23,7 @@ import static com.supreme.spa.backend.vue.services.UserService.PATH_AVATARS_FOLD
 
 @RestController
 @RequestMapping("/media")
+@CrossOrigin(origins = {"http://localhost:8080", "https://supreme-spa.firebaseapp.com"}, allowCredentials = "true")
 public class MediaController {
 
     private final MediaService mediaService;
